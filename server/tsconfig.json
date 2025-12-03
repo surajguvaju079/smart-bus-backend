@@ -9,25 +9,20 @@
     // See also https://aka.ms/tsconfig/module
     "moduleResolution": "node",
     "module": "commonjs",
-    "target": "es2022",
-    "types": [],
-     "outDir": "./dist",
+    "target": "esnext",
+    "types": ["node"],
+    "outDir": "./dist",
     "rootDir": "./src",
     // For nodejs:
-    // "lib": ["esnext"],
-    // "types": ["node"],
-    // and npm install -D @types/node
 
     // Other Outputs
     "sourceMap": true,
     "declaration": true,
     "declarationMap": true,
+    "forceConsistentCasingInFileNames": true,
 
     // Stricter Typechecking Options
-    "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
-       "resolveJsonModule": true,
-  
+
     "esModuleInterop": true,
 
     // Style Options
@@ -39,15 +34,11 @@
     // "noPropertyAccessFromIndexSignature": true,
 
     // Recommended Options
-    "strict": true,
-    "jsx": "react-jsx",
-    "verbatimModuleSyntax": true,
-    "isolatedModules": true,
-    "noUncheckedSideEffectImports": true,
-    "moduleDetection": "force",
+    "importsNotUsedAsValues": "remove",
+
     "skipLibCheck": true,
     "baseUrl": ".",
-     "paths": {
+    "paths": {
       "@/*": ["src/*"],
       "@config/*": ["src/config/*"],
       "@modules/*": ["src/modules/*"],

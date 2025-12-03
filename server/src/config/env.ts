@@ -12,11 +12,11 @@ const envSchema = z.object({
   DB_NAME: z.string(),
   DB_USER: z.string(),
   DB_PASSWORD: z.string(),
-  DB_POOL_MIN: z.string().transform(Number).default('2'),
-  DB_POOL_MAX: z.string().transform(Number).default('10'),
+  DB_POOL_MIN: z.string().transform(Number).default(2),
+  DB_POOL_MAX: z.string().transform(Number).default(10),
 
   API_PREFIX: z.string().default('/api/v1'),
-  API_RATE_LIMIT: z.string().transform(Number).default('100'),
+  API_RATE_LIMIT: z.string().transform(Number).default(100),
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -27,7 +27,7 @@ const parseEnv = (): Env => {
   } catch (error) {
     if (error instanceof z.ZodError) {
       console.error('❌ Invalid environment variables:');
-      error.errors.forEach((err) => {
+      error.issues.forEach((err) => {
         console.error(`  ${err.path.join('.')}: ${err.message}`);
       });
     }

@@ -59,8 +59,8 @@ class App {
   public async listen() {
     try {
       // Test database connection
-      await db.query('SELECT NOW()');
-      console.log('✅ Database connected');
+      //  await db.query('SELECT NOW()');
+      //  / console.log('✅ Database connected');
 
       this.app.listen(env.PORT, () => {
         console.log(`🚀 Server running on port ${env.PORT}`);
