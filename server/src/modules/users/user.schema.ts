@@ -37,8 +37,8 @@ export const getUserSchema = z.object({
 
 export const listUsersSchema = z.object({
   query: z.object({
-    page: z.string().transform(Number).pipe(z.number().min(1)).default('1'),
-    limit: z.string().transform(Number).pipe(z.number().min(1).max(100)).default('10'),
+    page: z.string().transform(Number).pipe(z.number().min(1)).default(1),
+    limit: z.string().transform(Number).pipe(z.number().min(1).max(100)).default(10),
   }),
 });
 
