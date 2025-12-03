@@ -4,9 +4,9 @@ import { OpenApiBuilder, OpenAPIObject } from 'openapi3-ts/oas31';
 export const openApiSpec: OpenAPIObject = OpenApiBuilder.create({
   openapi: '3.1.0',
   info: {
-    title: 'Production TypeScript API',
+    title: 'Smart Bus Server',
     version: '1.0.0',
-    description: 'A production-grade REST API with TypeScript, PostgreSQL, and Zod validation',
+    description: 'API documentation for the Smart Bus backend server',
   },
   servers: [
     {
