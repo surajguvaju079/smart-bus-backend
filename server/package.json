@@ -8,7 +8,9 @@
     "build": "tsc",
     "start": "node dist/app.js",
     "lint": "eslint src --ext .ts",
-    "format": "prettier --write \"src/**/*.ts\""
+    "format": "prettier --write \"src/**/*.ts\"",
+    "migrate": "tsx src/database/runMigrations.ts",
+    "migrate:build": "node dist/database/runMigrations.js"
   },
   "keywords": [],
   "author": "",
