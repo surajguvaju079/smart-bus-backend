@@ -2,16 +2,19 @@ import { z } from 'zod';
 
 export const userSchema = z.object({
   id: z.number(),
-  email: z.string().email(),
+  email: z.email(),
   name: z.string(),
+  password: z.string(),
   createdAt: z.date(),
   updatedAt: z.date(),
+  role: z.string().default('user'),
 });
 
 export const createUserSchema = z.object({
   body: z.object({
-    email: z.string().email('Invalid email format'),
+    email: z.email('Invalid email format'),
     name: z.string().min(2, 'Name must be at least 2 characters'),
+    password: z.string().min(6, 'Password must be at least 6 characters'),
   }),
 });
 

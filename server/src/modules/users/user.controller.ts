@@ -29,6 +29,7 @@ export class UserController implements Controller {
   }
 
   private createUser: AsyncHandler = async (req, res) => {
+    console.log('Creating user with data:', req.body);
     const response = await this.userService.createUser(req.body);
     res.status(response.statusCode).json(response.toJSON());
   };

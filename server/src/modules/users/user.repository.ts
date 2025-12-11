@@ -7,12 +7,12 @@ export class UserRepository {
   async create(data: CreateUserDTO): Promise<ServiceResponse<User>> {
     try {
       const query = `
-        INSERT INTO users (email, name)
-        VALUES ($1, $2)
-        RETURNING id, email, name, created_at as "createdAt", updated_at as "updatedAt"
+        INSERT INTO users (email, name, password)
+        VALUES ($1, $2, $3)
+        RETURNING id, email, name, password, role, created_at as "createdAt", updated_at as "updatedAt"
       `;
 
-      const result = await db.query<User>(query, [data.email, data.name]);
+      const result = await db.query<User>(query, [data.email, data.name, data.password]);
 
       if (!result.rows[0]) {
         return ServiceResponse.internalError('Failed to create user');

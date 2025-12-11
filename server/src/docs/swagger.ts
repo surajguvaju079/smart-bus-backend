@@ -10,7 +10,7 @@ export const openApiSpec: OpenAPIObject = OpenApiBuilder.create({
   },
   servers: [
     {
-      url: 'http://localhost:3000/api/v1',
+      url: 'http://localhost:8080/api/v1',
       description: 'Development server',
     },
   ],
@@ -25,10 +25,11 @@ export const openApiSpec: OpenAPIObject = OpenApiBuilder.create({
           'application/json': {
             schema: {
               type: 'object',
-              required: ['email', 'name'],
+              required: ['email', 'name', 'password'],
               properties: {
                 email: { type: 'string', format: 'email' },
                 name: { type: 'string', minLength: 2 },
+                password: { type: 'string', minLength: 6 },
               },
             },
           },
@@ -166,6 +167,7 @@ export const openApiSpec: OpenAPIObject = OpenApiBuilder.create({
       id: { type: 'integer' },
       email: { type: 'string', format: 'email' },
       name: { type: 'string' },
+      role: { type: 'string' },
       createdAt: { type: 'string', format: 'date-time' },
       updatedAt: { type: 'string', format: 'date-time' },
     },

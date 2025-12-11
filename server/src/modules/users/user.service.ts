@@ -1,3 +1,4 @@
+import brcypt from 'bcrypt';
 import { UserRepository } from './user.repository';
 import { User, CreateUserDTO, UpdateUserDTO } from './user.schema';
 import { ServiceResponse } from '@shared/types';
@@ -18,6 +19,11 @@ export class UserService {
     if (existingResponse.isFailure() && existingResponse.getError()?.code !== 'NOT_FOUND') {
       return existingResponse;
     }
+
+    const password = brcypt.hashSync(data.password, 10);
+    data.password = password;
+    console.log(`hashed password: ${password}`);
+    console.log('Creating user with data:', data);
 
     // User doesn't exist, create new one
     return await this.userRepository.create(data);
