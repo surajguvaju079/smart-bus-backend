@@ -198,4 +198,38 @@ export const openApiSpec: OpenAPIObject = OpenApiBuilder.create({
       },
     },
   })
+  .addPath('/auth/login', {
+    post: {
+      summary: 'Login user',
+      tags: ['Auth'],
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              required: ['email', 'password'],
+              properties: {
+                email: { type: 'string', format: 'email' },
+                password: { type: 'string' },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        '200': {
+          description: 'Login successful',
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/UserResponse',
+              },
+            },
+          },
+        },
+        '401': { description: 'Invalid credentials' },
+      },
+    },
+  })
   .getSpec();

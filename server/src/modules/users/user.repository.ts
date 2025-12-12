@@ -78,7 +78,7 @@ export class UserRepository {
     try {
       const countQuery = 'SELECT COUNT(*) FROM users';
       const dataQuery = `
-        SELECT id, email, name,  created_at as "createdAt", updated_at as "updatedAt"
+        SELECT id, email, name, role, created_at as "createdAt", updated_at as "updatedAt"
         FROM users
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
@@ -88,7 +88,6 @@ export class UserRepository {
         db.query(countQuery),
         db.query<User>(dataQuery, [pagination.limit, pagination.offset]),
       ]);
-      console.log('Data Result:', dataResult.rows);
 
       const total = parseInt(countResult.rows[0].count);
 

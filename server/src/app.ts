@@ -8,10 +8,11 @@ import { db } from '@shared/database/connection';
 import { errorHandler, notFoundHandler } from '@shared/middleware/error.middleware';
 import { UserController } from '@modules/users/user.controller';
 import { openApiSpec } from './docs/swagger';
+import { AuthController } from './modules/auth/auth.controller';
 
 class App {
   public app: Application;
-  private controllers = [new UserController()];
+  private controllers = [new UserController(), new AuthController()];
 
   constructor() {
     this.app = express();
