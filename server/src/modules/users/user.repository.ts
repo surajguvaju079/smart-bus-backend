@@ -4,12 +4,12 @@ import { PaginationParams, ServiceResponse } from '@shared/types/index';
 import { StatusCodes } from 'http-status-codes';
 
 export class UserRepository {
-  async create(data: CreateUserDTO): Promise<ServiceResponse<User>> {
+  async create(data: CreateUserDTO): Promise<ServiceResponse<Omit<User, 'password'>>> {
     try {
       const query = `
         INSERT INTO users (email, name, password)
         VALUES ($1, $2, $3)
-        RETURNING id, email, name, password, role, created_at as "createdAt", updated_at as "updatedAt"
+        RETURNING id, email, name, role, created_at as "createdAt", updated_at as "updatedAt"
       `;
 
       const result = await db.query<User>(query, [data.email, data.name, data.password]);
@@ -33,7 +33,7 @@ export class UserRepository {
   async findById(id: number): Promise<ServiceResponse<User>> {
     try {
       const query = `
-        SELECT id, email, name, created_at as "createdAt", updated_at as "updatedAt"
+        SELECT id, email, name, role, created_at as "createdAt", updated_at as "updatedAt"
         FROM users
         WHERE id = $1
       `;
@@ -78,7 +78,7 @@ export class UserRepository {
     try {
       const countQuery = 'SELECT COUNT(*) FROM users';
       const dataQuery = `
-        SELECT id, email, name, created_at as "createdAt", updated_at as "updatedAt"
+        SELECT id, email, name,  created_at as "createdAt", updated_at as "updatedAt"
         FROM users
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
@@ -88,6 +88,7 @@ export class UserRepository {
         db.query(countQuery),
         db.query<User>(dataQuery, [pagination.limit, pagination.offset]),
       ]);
+      console.log('Data Result:', dataResult.rows);
 
       const total = parseInt(countResult.rows[0].count);
 

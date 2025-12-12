@@ -1,4 +1,4 @@
-import brcypt from 'bcrypt';
+const brcypt = require('bcrypt');
 import { UserRepository } from './user.repository';
 import { User, CreateUserDTO, UpdateUserDTO } from './user.schema';
 import { ServiceResponse } from '@shared/types';
@@ -6,7 +6,7 @@ import { ServiceResponse } from '@shared/types';
 export class UserService {
   constructor(private userRepository: UserRepository) {}
 
-  async createUser(data: CreateUserDTO): Promise<ServiceResponse<User>> {
+  async createUser(data: CreateUserDTO): Promise<ServiceResponse<Omit<User, 'password'>>> {
     // Check if user already exists
     const existingResponse = await this.userRepository.findByEmail(data.email);
 
@@ -22,8 +22,6 @@ export class UserService {
 
     const password = brcypt.hashSync(data.password, 10);
     data.password = password;
-    console.log(`hashed password: ${password}`);
-    console.log('Creating user with data:', data);
 
     // User doesn't exist, create new one
     return await this.userRepository.create(data);

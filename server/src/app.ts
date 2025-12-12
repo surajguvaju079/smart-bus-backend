@@ -60,6 +60,7 @@ class App {
     try {
       await db.query('SELECT NOW()');
       console.log('✅ Database connected');
+      console.log('hi');
 
       this.app.listen(env.PORT, () => {
         console.log(`🚀 Server running on port ${env.PORT}`);
