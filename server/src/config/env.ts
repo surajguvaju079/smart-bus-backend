@@ -14,7 +14,7 @@ const envSchema = z.object({
   DB_PASSWORD: z.string(),
   DB_POOL_MIN: z.string().transform(Number).default(2),
   DB_POOL_MAX: z.string().transform(Number).default(10),
-
+  JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters long'),
   API_PREFIX: z.string().default('/api/v1'),
   API_RATE_LIMIT: z.string().transform(Number).default(100),
 });

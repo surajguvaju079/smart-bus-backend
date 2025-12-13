@@ -24,7 +24,14 @@ class App {
 
   private initializeMiddlewares() {
     this.app.use(helmet());
-    this.app.use(cors());
+    this.app.use(
+      cors({
+        origin: '*',
+        credentials: true,
+        exposedHeaders: ['Authorization'],
+        allowedHeaders: ['Content-Type', 'Authorization'],
+      })
+    );
     this.app.use(compression());
     this.app.use(express.json());
     this.app.use(express.urlencoded({ extended: true }));

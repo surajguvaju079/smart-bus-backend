@@ -15,6 +15,14 @@ export const openApiSpec: OpenAPIObject = OpenApiBuilder.create({
     },
   ],
 })
+
+  .addSecurityScheme('bearerAuth', {
+    type: 'http',
+    scheme: 'bearer',
+    bearerFormat: 'JWT',
+    description: 'Enter your JWT token (without "Bearer" prefix)',
+  })
+
   .addPath('/users', {
     post: {
       summary: 'Create a new user',
@@ -83,6 +91,7 @@ export const openApiSpec: OpenAPIObject = OpenApiBuilder.create({
     get: {
       summary: 'Get user by ID',
       tags: ['Users'],
+      security: [{ bearerAuth: [] }],
       parameters: [
         {
           name: 'id',

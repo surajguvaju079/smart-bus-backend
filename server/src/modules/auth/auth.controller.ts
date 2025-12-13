@@ -20,6 +20,7 @@ export class AuthController implements Controller {
   }
 
   private loginUser: AsyncHandler = async (req, res) => {
+    console.log('hi there');
     console.log('Login attempt with data:', req.body);
     const { email, password } = req.body;
 

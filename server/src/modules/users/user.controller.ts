@@ -9,6 +9,7 @@ import {
   listUsersSchema,
 } from './user.schema.js';
 import { Controller, AsyncHandler } from '@shared/types/index';
+import { Authenticate, AuthorizeRoles } from '@/shared/middleware/auth.middleware';
 
 export class UserController implements Controller {
   public path = '/users';
@@ -22,8 +23,20 @@ export class UserController implements Controller {
 
   private initializeRoutes() {
     this.router.post('/', validate(createUserSchema), this.createUser);
-    this.router.get('/', validate(listUsersSchema), this.getUsers);
-    this.router.get('/:id', validate(getUserSchema), this.getUserById);
+    this.router.get(
+      '/',
+      validate(listUsersSchema),
+      Authenticate,
+      AuthorizeRoles('admin'),
+      this.getUsers
+    );
+    this.router.get(
+      '/:id',
+      validate(getUserSchema),
+      Authenticate,
+      AuthorizeRoles('user', 'admin', 'guest', 'driver'),
+      this.getUserById
+    );
     this.router.patch('/:id', validate(updateUserSchema), this.updateUser);
     this.router.delete('/:id', validate(getUserSchema), this.deleteUser);
   }
