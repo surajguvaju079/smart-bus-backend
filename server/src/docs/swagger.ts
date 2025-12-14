@@ -1,4 +1,3 @@
-// ============================================================================
 import { OpenApiBuilder, OpenAPIObject } from 'openapi3-ts/oas31';
 
 export const openApiSpec: OpenAPIObject = OpenApiBuilder.create({
