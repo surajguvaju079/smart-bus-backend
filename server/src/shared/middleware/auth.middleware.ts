@@ -3,6 +3,8 @@ import { env } from '@config/env';
 import { AsyncHandler } from '../types';
 import { NextFunction } from 'express';
 import { UserRole } from '../types/auth';
+import { ref } from 'process';
+import { success } from 'zod';
 
 export const Authenticate = (req, res, next) => {
   const authHeader = req.headers.authorization || req.headers['authorization'];
@@ -56,4 +58,24 @@ export const generateRefreshToken = (userId: number): string => {
   const payload = { userId };
   const refresh_token = jwt.sign(payload, env.JWT_SECRET, { expiresIn: '7d' });
   return refresh_token;
+};
+
+export const refreshAccessToken: AsyncHandler = async (req, res) => {
+  const { refreshToken } = req.body;
+
+  if (!refreshToken) {
+    return res.status(400).json({
+      success: false,
+      error: 'Refresh token is required',
+    });
+  }
+  try {
+    const decoded = jwt.verify(refreshToken, env.JWT_SECRET) as any;
+    if (decoded.type !== 'refresh') {
+      return res.status(401).json({
+        success: false,
+        error: 'Invalid refresh token',
+      });
+    }
+  } catch (error) {}
 };
