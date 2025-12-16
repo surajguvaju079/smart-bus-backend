@@ -60,7 +60,7 @@ export const generateRefreshToken = (userId: number): string => {
   return refresh_token;
 };
 
-export const refreshAccessToken: AsyncHandler = async (req, res) => {
+export const refreshAccessToken = async (req, res) => {
   const { refreshToken } = req.body;
 
   if (!refreshToken) {
@@ -77,5 +77,13 @@ export const refreshAccessToken: AsyncHandler = async (req, res) => {
         error: 'Invalid refresh token',
       });
     }
-  } catch (error) {}
+
+    //Fetch user if needed
+    //const
+  } catch (error) {
+    return res.status(401).json({
+      success: false,
+      error: 'Invalid or expired refresh token',
+    });
+  }
 };
