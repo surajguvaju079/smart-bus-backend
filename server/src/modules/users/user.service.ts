@@ -1,4 +1,4 @@
-const brcypt = require('bcrypt');
+import brcypt from 'bcrypt';
 import { UserRepository } from './user.repository';
 import { User, CreateUserDTO, UpdateUserDTO } from './user.schema';
 import { ServiceResponse } from '@shared/types';
