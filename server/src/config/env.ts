@@ -41,6 +41,11 @@ const envSchema = z.object({
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters long'),
   API_PREFIX: z.string().default('/api/v1'),
   API_RATE_LIMIT: z.string().transform(Number).default(100),
+
+  Sid:z.string(),
+  Semail:z.email(),
+  Sname:z.string(),
+  Spassword:z.string()
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -50,7 +55,7 @@ const parseEnv = (): Env => {
     return envSchema.parse(mergedEnv);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      console.error('❌ Invalid environment variables:');
+      console.error('Invalid environment variables:');
       error.issues.forEach((err) => {
         console.error(`  ${err.path.join('.')}: ${err.message}`);
       });

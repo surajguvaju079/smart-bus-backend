@@ -24,7 +24,7 @@ export const updateUserSchema = z.object({
   }),
   body: z
     .object({
-      email: z.string().email().optional(),
+      email: z.email().optional(),
       name: z.string().min(2).optional(),
     })
     .refine((data) => Object.keys(data).length > 0, {
