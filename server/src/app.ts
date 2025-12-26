@@ -72,8 +72,8 @@ class App {
 
       this.app.listen(env.PORT, () => {
         console.log(`🚀 Server running on port ${env.PORT}`);
-        console.log(`📚 API docs available at http://localhost:${env.PORT}/api-docs`);
-        console.log(`🏥 Health check at http://localhost:${env.PORT}/health`);
+        console.log(`📚 API docs available at ${env.BASE_URL}:${env.PORT}/api-docs`);
+        console.log(`🏥 Health check at ${env.BASE_URL}:${env.PORT}/health`);
       });
     } catch (error) {
       console.error('❌ Failed to start server:', error);

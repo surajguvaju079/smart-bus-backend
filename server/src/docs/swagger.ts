@@ -10,7 +10,7 @@ export const openApiSpec: OpenAPIObject = OpenApiBuilder.create({
   },
   servers: [
     {
-      url: 'http://localhost:8080/api/v1',
+      url: `${process.env.BASE_URL}:${process.env.PORT}/api/v1`,
       description: 'Development server',
     },
   ],
