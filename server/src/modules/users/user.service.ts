@@ -2,29 +2,39 @@ import brcypt from 'bcrypt';
 import { UserRepository } from './user.repository';
 import { User, CreateUserDTO, UpdateUserDTO } from './user.schema';
 import { ServiceResponse } from '@shared/types';
+import { UserDTO } from './user.dto';
 
 export class UserService {
   constructor(private userRepository: UserRepository) {}
 
-  async createUser(data: CreateUserDTO): Promise<ServiceResponse<Omit<User, 'password'>>> {
+  async createUser(data: CreateUserDTO): Promise<ServiceResponse> {
+    try {
+      const existingUser = await this.userRepository.findByEmail(data.email);
+      console.log('Existing user check:', existingUser);
+
+      if (existingUser) {
+        return ServiceResponse.alreadyExists('Email already in use');
+      }
+
+      const password = brcypt.hashSync(data.password, 10);
+      data.password = password;
+
+      // User doesn't exist, create new one
+      const user = await this.userRepository.create(data);
+      if (!user) {
+        return ServiceResponse.internalError('Failed to create user');
+      }
+
+      const userDto = UserDTO.fromEntity(user as any);
+      console.log('Created userDto:', userDto);
+
+      return ServiceResponse.created(userDto);
+    } catch (error) {
+      return ServiceResponse.internalError('An unexpected error occurred', {
+        original: (error as Error).message,
+      });
+    }
     // Check if user already exists
-    const existingResponse = await this.userRepository.findByEmail(data.email);
-
-    // If we got a success response, user exists
-    if (existingResponse.isSuccess()) {
-      return ServiceResponse.alreadyExists('User with this email already exists');
-    }
-
-    // If error is NOT "not found", it's a real error
-    if (existingResponse.isFailure() && existingResponse.getError()?.code !== 'NOT_FOUND') {
-      return existingResponse;
-    }
-
-    const password = brcypt.hashSync(data.password, 10);
-    data.password = password;
-
-    // User doesn't exist, create new one
-    return await this.userRepository.create(data);
   }
 
   async getUserById(id: number): Promise<ServiceResponse<User>> {

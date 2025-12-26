@@ -1,3 +1,4 @@
+import { ROLES } from '@/shared/constants/constant';
 import { OpenApiBuilder, OpenAPIObject } from 'openapi3-ts/oas31';
 
 export const openApiSpec: OpenAPIObject = OpenApiBuilder.create({
@@ -48,7 +49,7 @@ export const openApiSpec: OpenAPIObject = OpenApiBuilder.create({
           content: {
             'application/json': {
               schema: {
-                $ref: '#/components/schemas/UserResponse',
+                $ref: '#/components/schemas/User',
               },
             },
           },
@@ -172,26 +173,67 @@ export const openApiSpec: OpenAPIObject = OpenApiBuilder.create({
   .addSchema('User', {
     type: 'object',
     properties: {
-      id: { type: 'integer' },
-      email: { type: 'string', format: 'email' },
-      name: { type: 'string' },
-      role: { type: 'string' },
-      createdAt: { type: 'string', format: 'date-time' },
-      updatedAt: { type: 'string', format: 'date-time' },
+      success: { type: 'boolean' },
+      responseObject: {
+        type: 'object',
+        properties: {
+          user: {
+            type: 'object',
+            properties: {
+              id: { type: 'integer' },
+              email: { type: 'string', format: 'email' },
+              name: { type: 'string' },
+              role: { type: 'string' },
+              createdAt: { type: 'string', format: 'date-time' },
+              updatedAt: { type: 'string', format: 'date-time' },
+              isFirstLogin: { type: 'boolean' },
+              profileImage: { type: ['string', 'null'] },
+              phoneNumber: { type: ['string', 'null'] },
+            },
+          },
+        },
+      },
     },
   })
   .addSchema('UserResponse', {
     type: 'object',
     properties: {
       success: { type: 'boolean' },
-      data: { $ref: '#/components/schemas/User' },
+      responseObject: { $ref: '#/components/schemas/User' },
+    },
+  })
+  .addSchema('AuthResponse', {
+    type: 'object',
+    properties: {
+      success: { type: 'boolean' },
+      responseObject: {
+        type: 'object',
+        properties: {
+          user: {
+            type: 'object',
+            properties: {
+              id: { type: 'integer' },
+              email: { type: 'string', format: 'email' },
+              name: { type: 'string' },
+              role: { type: 'string' },
+              createdAt: { type: 'string', format: 'date-time' },
+              updatedAt: { type: 'string', format: 'date-time' },
+              isFirstLogin: { type: 'boolean' },
+              profileImage: { type: ['string', 'null'] },
+              phoneNumber: { type: ['string', 'null'] },
+            },
+          },
+          accessToken: { type: 'string' },
+          refreshToken: { type: 'string' },
+        },
+      },
     },
   })
   .addSchema('UserListResponse', {
     type: 'object',
     properties: {
       success: { type: 'boolean' },
-      data: {
+      responseObject: {
         type: 'array',
         items: { $ref: '#/components/schemas/User' },
       },
@@ -231,7 +273,7 @@ export const openApiSpec: OpenAPIObject = OpenApiBuilder.create({
           content: {
             'application/json': {
               schema: {
-                $ref: '#/components/schemas/UserResponse',
+                $ref: '#/components/schemas/AuthResponse',
               },
             },
           },
