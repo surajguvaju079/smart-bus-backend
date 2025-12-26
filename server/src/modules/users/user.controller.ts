@@ -62,7 +62,7 @@ export class UserController implements Controller {
     const response = await this.userService.getUsers(page, limit);
 
     if (response.isSuccess()) {
-      const data = response.getData()!;
+      const data = response.getResponseObject()!;
       res.status(response.statusCode).json({
         success: true,
         data: data.users,

@@ -52,7 +52,7 @@ export class UserService {
       return response as any;
     }
 
-    const data = response.getData()!;
+    const data = response as any;
 
     return ServiceResponse.ok({
       users: data.users,
@@ -70,15 +70,13 @@ export class UserService {
     if (data.email) {
       const existingResponse = await this.userRepository.findByEmail(data.email);
 
-      if (existingResponse.isSuccess()) {
-        const existingUser = existingResponse.getData()!;
+      if (existingResponse) {
+        const existingUser = existingResponse;
         if (existingUser.id !== id) {
           return ServiceResponse.alreadyExists('Email already in use');
         }
-      } else if (existingResponse.getError()?.code !== 'NOT_FOUND') {
-        // Real error occurred
-        return existingResponse;
       }
+      return ServiceResponse.internalError('Failed to check existing email');
     }
 
     return await this.userRepository.update(id, data);
