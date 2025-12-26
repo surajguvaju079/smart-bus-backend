@@ -29,7 +29,7 @@ const mergedEnv = { ...process.env, ...dbFromUrl };
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   PORT: z.string().transform(Number).pipe(z.number().min(1).max(65535)),
-
+  BASE_URL: z.string(),
   DB_HOST: z.string(),
   DB_PORT: z.string().transform(Number),
   DB_NAME: z.string(),
