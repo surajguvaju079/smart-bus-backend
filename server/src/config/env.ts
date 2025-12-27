@@ -14,7 +14,7 @@ const parseDatabaseUrl = (url: string | undefined) => {
       DB_PORT: parsed.port || '5432',
       DB_NAME: parsed.pathname.slice(1), // Remove leading '/'
       DB_USER: parsed.username,
-      DB_PASSWORD: parsed.password,
+      DB_PASSWORD: decodeURIComponent(parsed.password), // Decode special characters
     };
   } catch (error) {
     console.error('Failed to parse DATABASE_URL:', error);
@@ -28,19 +28,20 @@ const mergedEnv = { ...process.env, ...dbFromUrl };
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  PORT: z.string().transform(Number).pipe(z.number().min(1).max(65535)),
-  BASE_URL: z.string(),
+  PORT: z.string().default('3000').transform(Number).pipe(z.number().min(1).max(65535)),
+  BASE_URL: z.string().default('http://localhost:3000'),
+
   DB_HOST: z.string(),
-  DB_PORT: z.string().transform(Number),
+  DB_PORT: z.string().default('5432').transform(Number),
   DB_NAME: z.string(),
   DB_USER: z.string(),
   DB_PASSWORD: z.string(),
-  DB_POOL_MIN: z.string().transform(Number).default(2),
-  DB_POOL_MAX: z.string().transform(Number).default(10),
+  DB_POOL_MIN: z.string().default('2').transform(Number),
+  DB_POOL_MAX: z.string().default('10').transform(Number),
 
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters long'),
   API_PREFIX: z.string().default('/api/v1'),
-  API_RATE_LIMIT: z.string().transform(Number).default(100),
+  API_RATE_LIMIT: z.string().default('100').transform(Number),
 });
 
 export type Env = z.infer<typeof envSchema>;
