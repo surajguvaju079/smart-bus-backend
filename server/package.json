@@ -10,6 +10,7 @@
     "lint": "eslint src --ext .ts",
     "format": "prettier --write \"src/**/*.ts\"",
     "migrate": "tsx src/database/runMigrations.ts",
+    "copy-migrations": "mkdir -p dist/database/migrations && cp -r src/database/migrations/*.sql dist/database/migrations/ 2>/dev/null || true",
     "migrate:build": "node dist/database/runMigrations.js"
   },
   "keywords": [],
