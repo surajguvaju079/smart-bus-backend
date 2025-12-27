@@ -9,6 +9,7 @@ import { errorHandler, notFoundHandler } from '@shared/middleware/error.middlewa
 import { UserController } from '@modules/users/user.controller';
 import { openApiSpec } from './docs/swagger';
 import { AuthController } from './modules/auth/auth.controller';
+import { runMigrations } from './database/runMigrations';
 
 class App {
   public app: Application;
@@ -66,6 +67,7 @@ class App {
 
   public async listen() {
     try {
+      await runMigrations();
       this.app.listen(env.PORT, '0.0.0.0', () => {
         console.log(`🚀 Server running on port ${env.PORT}`);
         console.log(`📚 API docs available at ${env.BASE_URL}:${env.PORT}/api-docs`);

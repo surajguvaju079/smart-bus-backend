@@ -5,7 +5,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-async function runMigrations() {
+export async function runMigrations() {
   const client = new Client({
     host: process.env.DB_HOST,
     port: Number(process.env.DB_PORT),
