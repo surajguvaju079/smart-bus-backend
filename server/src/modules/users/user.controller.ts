@@ -30,8 +30,8 @@ export class UserController implements Controller {
     this.router.get(
       '/',
       validate(listUsersSchema),
-      Authenticate,
-      AuthorizeRoles(ROLES.ADMIN, ROLES.DRIVER),
+      /*  Authenticate,
+      AuthorizeRoles(ROLES.ADMIN, ROLES.DRIVER), */
       this.getUsers
     );
 
@@ -39,9 +39,9 @@ export class UserController implements Controller {
     this.router.get(
       '/:id',
       validate(getUserSchema),
-      Authenticate,
+      /*    Authenticate,
       AuthorizeRoles(ROLES.ADMIN, ROLES.USER, ROLES.DRIVER, ROLES.GUEST),
-      this.getUserById
+    */ this.getUserById
     );
 
     // Update User
@@ -60,17 +60,7 @@ export class UserController implements Controller {
   private getUsers: AsyncHandler = async (req, res) => {
     const { page, limit } = req.query as any;
     const response = await this.userService.getUsers(page, limit);
-
-    if (response.isSuccess()) {
-      const data = response.getResponseObject()!;
-      res.status(response.statusCode).json({
-        success: true,
-        data: data.users,
-        meta: data.meta,
-      });
-    } else {
-      res.status(response.statusCode).json(response.toJSON());
-    }
+    res.status(response.statusCode).json(response.toJSON());
   };
 
   private getUserById: AsyncHandler = async (req, res) => {

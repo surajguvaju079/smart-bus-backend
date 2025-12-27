@@ -27,8 +27,12 @@ export const updateUserSchema = z.object({
   }),
   body: z
     .object({
-      email: z.string().email().optional(),
+      email: z.email().optional(),
       name: z.string().min(2).optional(),
+      role: z.string().optional(),
+      profile_image: z.string().nullable().optional(),
+
+      phone_number: z.string().nullable().optional(),
     })
     .refine((data) => Object.keys(data).length > 0, {
       message: 'At least one field must be provided',

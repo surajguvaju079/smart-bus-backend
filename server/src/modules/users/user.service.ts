@@ -37,32 +37,42 @@ export class UserService {
     // Check if user already exists
   }
 
-  async getUserById(id: number): Promise<ServiceResponse<User>> {
-    return await this.userRepository.findById(id);
-  }
-
-  async getUsers(
-    page: number,
-    limit: number
-  ): Promise<ServiceResponse<{ users: User[]; meta: any }>> {
-    const offset = (page - 1) * limit;
-    const response = await this.userRepository.findAll({ page, limit, offset });
-
-    if (response.isFailure()) {
-      return response as any;
+  async getUserById(id: number): Promise<ServiceResponse> {
+    const user = await this.userRepository.findById(id);
+    if (!user) {
+      return ServiceResponse.notFound('User not found');
     }
 
-    const data = response as any;
+    const userDto = UserDTO.fromEntity(user as any);
+    return ServiceResponse.ok(userDto);
+  }
 
-    return ServiceResponse.ok({
-      users: data.users,
-      meta: {
-        page,
-        limit,
-        total: data.total,
-        totalPages: Math.ceil(data.total / limit),
-      },
-    });
+  async getUsers(page: number, limit: number): Promise<ServiceResponse> {
+    try {
+      const offset = (page - 1) * limit;
+      const response = await this.userRepository.findAll({ page, limit, offset });
+      if (!response) {
+        return ServiceResponse.internalError('Failed to fetch users');
+      }
+
+      const data = response as any;
+
+      const usersDto = data.users.map((user: User) => UserDTO.fromEntity(user as any));
+
+      return ServiceResponse.ok({
+        users: usersDto,
+        meta: {
+          page,
+          limit,
+          total: data.total,
+          totalPages: Math.ceil(data.total / limit),
+        },
+      });
+    } catch (error) {
+      return ServiceResponse.internalError('An unexpected error occurred', {
+        original: (error as Error).message,
+      });
+    }
   }
 
   async updateUser(id: number, data: UpdateUserDTO): Promise<ServiceResponse<User>> {
