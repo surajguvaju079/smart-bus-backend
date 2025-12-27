@@ -8,6 +8,9 @@ export const userSchema = z.object({
   createdAt: z.date(),
   updatedAt: z.date(),
   role: z.string().default('user'),
+  profile_image: z.string().nullable().optional(),
+  is_first_login: z.boolean().optional(),
+  phone_number: z.string().nullable().optional(),
 });
 
 export const createUserSchema = z.object({

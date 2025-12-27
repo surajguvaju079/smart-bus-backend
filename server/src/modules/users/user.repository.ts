@@ -4,30 +4,20 @@ import { PaginationParams, ServiceResponse } from '@shared/types/index';
 import { StatusCodes } from 'http-status-codes';
 
 export class UserRepository {
-  async create(data: CreateUserDTO): Promise<ServiceResponse<Omit<User, 'password'>>> {
-    try {
-      const query = `
+  async create(data: { email: string; name: string; password: string }): Promise<User | null> {
+    const query = `
         INSERT INTO users (email, name, password)
         VALUES ($1, $2, $3)
-        RETURNING id, email, name, role, created_at as "createdAt", updated_at as "updatedAt"
+        RETURNING *
       `;
 
-      const result = await db.query<User>(query, [data.email, data.name, data.password]);
+    const result = await db.query(query, [data.email, data.name, data.password]);
 
-      if (!result.rows[0]) {
-        return ServiceResponse.internalError('Failed to create user');
-      }
-
-      return ServiceResponse.created(result.rows[0]);
-    } catch (error: any) {
-      // Handle unique constraint violation
-      if (error.code === '23505') {
-        return ServiceResponse.alreadyExists('User with this email already exists');
-      }
-
-      console.error('Database error in create:', error);
-      return ServiceResponse.databaseError('Failed to create user', { original: error.message });
+    if (result.rows.length === 0) {
+      return null;
     }
+
+    return result.rows[0];
   }
 
   async findById(id: number): Promise<ServiceResponse<User>> {
@@ -51,25 +41,21 @@ export class UserRepository {
     }
   }
 
-  async findByEmail(email: string): Promise<ServiceResponse<User>> {
-    try {
-      const query = `
-        SELECT id, email, name, created_at as "createdAt", updated_at as "updatedAt"
+  async findByEmail(email: string): Promise<User | null> {
+    const query = `
+        SELECT *
         FROM users
         WHERE email = $1
       `;
 
-      const result = await db.query<User>(query, [email]);
+    const result = await db.query(query, [email]);
+    console.log('findByEmail result:', result.rows);
 
-      if (!result.rows[0]) {
-        return ServiceResponse.notFound('User not found');
-      }
-
-      return ServiceResponse.ok(result.rows[0]);
-    } catch (error: any) {
-      console.error('Database error in findByEmail:', error);
-      return ServiceResponse.databaseError('Failed to fetch user', { original: error.message });
+    if (result.rows.length === 0) {
+      return null;
     }
+
+    return result.rows[0];
   }
 
   async findAll(

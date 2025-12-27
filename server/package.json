@@ -10,6 +10,7 @@
     "lint": "eslint src --ext .ts",
     "format": "prettier --write \"src/**/*.ts\"",
     "migrate": "tsx src/database/runMigrations.ts",
+    "copy-migrations": "copyfiles -u 1 \"src/database/migrations/**/*.sql\" dist",
     "migrate:build": "node dist/database/runMigrations.js"
   },
   "keywords": [],
@@ -18,6 +19,7 @@
   "dependencies": {
     "bcrypt": "^6.0.0",
     "compression": "^1.8.1",
+    "copyfiles": "^2.4.1",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",

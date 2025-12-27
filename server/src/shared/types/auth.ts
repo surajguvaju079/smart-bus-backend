@@ -1,1 +1,3 @@
-export type UserRole = 'admin' | 'user' | 'driver' | 'guest';
+import { ROLES } from '../constants/constant';
+
+export type UserRole = keyof typeof ROLES;

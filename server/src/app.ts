@@ -9,6 +9,7 @@ import { errorHandler, notFoundHandler } from '@shared/middleware/error.middlewa
 import { UserController } from '@modules/users/user.controller';
 import { openApiSpec } from './docs/swagger';
 import { AuthController } from './modules/auth/auth.controller';
+import { runMigrations } from './database/runMigrations';
 
 class App {
   public app: Application;
@@ -26,7 +27,7 @@ class App {
     this.app.use(helmet());
     this.app.use(
       cors({
-        origin: '*',
+        origin: 'true',
         credentials: true,
         exposedHeaders: ['Authorization'],
         allowedHeaders: ['Content-Type', 'Authorization'],
@@ -66,14 +67,11 @@ class App {
 
   public async listen() {
     try {
-      await db.query('SELECT NOW()');
-      console.log('✅ Database connected');
-      console.log('hi');
-
-      this.app.listen(env.PORT, () => {
+      await runMigrations();
+      this.app.listen(env.PORT, '0.0.0.0', () => {
         console.log(`🚀 Server running on port ${env.PORT}`);
-        console.log(`📚 API docs available at http://localhost:${env.PORT}/api-docs`);
-        console.log(`🏥 Health check at http://localhost:${env.PORT}/health`);
+        console.log(`📚 API docs available at ${env.BASE_URL}:${env.PORT}/api-docs`);
+        console.log(`🏥 Health check at ${env.BASE_URL}:${env.PORT}/health`);
       });
     } catch (error) {
       console.error('❌ Failed to start server:', error);
