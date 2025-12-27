@@ -26,7 +26,7 @@ class App {
     this.app.use(helmet());
     this.app.use(
       cors({
-        origin: '*',
+        origin: 'true',
         credentials: true,
         exposedHeaders: ['Authorization'],
         allowedHeaders: ['Content-Type', 'Authorization'],
@@ -66,11 +66,7 @@ class App {
 
   public async listen() {
     try {
-      await db.query('SELECT NOW()');
-      console.log('✅ Database connected');
-      console.log('hi');
-
-      this.app.listen(env.PORT, () => {
+      this.app.listen(env.PORT, '0.0.0.0', () => {
         console.log(`🚀 Server running on port ${env.PORT}`);
         console.log(`📚 API docs available at ${env.BASE_URL}:${env.PORT}/api-docs`);
         console.log(`🏥 Health check at ${env.BASE_URL}:${env.PORT}/health`);
