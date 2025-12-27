@@ -1,44 +1,83 @@
+// src/database/runMigrations.ts
 import fs from 'fs';
 import path from 'path';
 import { Client } from 'pg';
-import dotenv from 'dotenv';
+import { env } from '@/config/env'; // Import env instead of dotenv
 
-dotenv.config();
+// Remove this line:
+// dotenv.config();
 
 export async function runMigrations() {
   const client = new Client({
-    host: process.env.DB_HOST,
-    port: Number(process.env.DB_PORT),
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
+    host: env.DB_HOST,
+    port: env.DB_PORT,
+    user: env.DB_USER,
+    password: env.DB_PASSWORD,
+    database: env.DB_NAME,
+    // Add SSL for production
+    ssl:
+      env.NODE_ENV === 'production'
+        ? {
+            rejectUnauthorized: false,
+          }
+        : undefined,
   });
 
-  await client.connect();
+  try {
+    console.log('🔌 Connecting to database...');
+    console.log(`  Host: ${env.DB_HOST}`);
+    console.log(`  Database: ${env.DB_NAME}`);
 
-  const migrationsDir = path.join(__dirname, 'migrations');
-  const files = fs.readdirSync(migrationsDir).sort();
+    await client.connect();
+    console.log('✅ Connected to database\n');
 
-  console.log('Running migrations...\n');
+    const migrationsDir = path.join(__dirname, 'migrations');
 
-  for (const file of files) {
-    const filePath = path.join(migrationsDir, file);
-    const sql = fs.readFileSync(filePath, 'utf8');
-
-    console.log(`▶ Running: ${file}`);
-
-    try {
-      await client.query(sql);
-      console.log(`✔ Completed: ${file}\n`);
-    } catch (err: any) {
-      console.error(`❌ Failed on ${file}`);
-      console.error(err.message);
-      process.exit(1);
+    // Check if migrations directory exists
+    if (!fs.existsSync(migrationsDir)) {
+      console.log('⚠️  No migrations directory found');
+      return;
     }
-  }
 
-  await client.end();
-  console.log('🎉 All migrations completed');
+    const files = fs
+      .readdirSync(migrationsDir)
+      .filter((f) => f.endsWith('.sql'))
+      .sort();
+
+    if (files.length === 0) {
+      console.log('⚠️  No migration files found');
+      return;
+    }
+
+    console.log(`📋 Found ${files.length} migration(s)\n`);
+
+    for (const file of files) {
+      const filePath = path.join(migrationsDir, file);
+      const sql = fs.readFileSync(filePath, 'utf8');
+
+      console.log(`▶ Running: ${file}`);
+
+      try {
+        await client.query(sql);
+        console.log(`✔ Completed: ${file}\n`);
+      } catch (err: any) {
+        console.error(`❌ Failed on ${file}`);
+        console.error(err.message);
+        await client.end();
+        process.exit(1);
+      }
+    }
+
+    await client.end();
+    console.log('🎉 All migrations completed successfully');
+  } catch (error) {
+    console.error('❌ Migration error:', error);
+    await client.end();
+    process.exit(1);
+  }
 }
 
-runMigrations();
+// Only run if this file is executed directly
+if (require.main === module) {
+  runMigrations();
+}
