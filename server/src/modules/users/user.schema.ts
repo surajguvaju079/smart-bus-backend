@@ -8,6 +8,9 @@ export const userSchema = z.object({
   createdAt: z.date(),
   updatedAt: z.date(),
   role: z.string().default('user'),
+  profile_image: z.string().nullable().optional(),
+  is_first_login: z.boolean().optional(),
+  phone_number: z.string().nullable().optional(),
 });
 
 export const createUserSchema = z.object({
@@ -26,6 +29,10 @@ export const updateUserSchema = z.object({
     .object({
       email: z.email().optional(),
       name: z.string().min(2).optional(),
+      role: z.string().optional(),
+      profile_image: z.string().nullable().optional(),
+
+      phone_number: z.string().nullable().optional(),
     })
     .refine((data) => Object.keys(data).length > 0, {
       message: 'At least one field must be provided',

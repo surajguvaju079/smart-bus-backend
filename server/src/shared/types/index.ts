@@ -102,18 +102,18 @@ export class ServiceError {
 export class ServiceResponse<T = any> {
   private constructor(
     public success: boolean,
-    public data: T | null,
+    public responseObject: T | null,
     public error: ServiceError | null,
     public statusCode: number
   ) {}
 
   // Success responses
-  static ok<T>(data: T, statusCode: number = StatusCodes.OK): ServiceResponse<T> {
-    return new ServiceResponse(true, data, null, statusCode);
+  static ok<T>(responseObject: T, statusCode: number = StatusCodes.OK): ServiceResponse<T> {
+    return new ServiceResponse(true, responseObject, null, statusCode);
   }
 
-  static created<T>(data: T): ServiceResponse<T> {
-    return new ServiceResponse(true, data, null, StatusCodes.CREATED);
+  static created<T>(responseObject: T): ServiceResponse<T> {
+    return new ServiceResponse(true, responseObject, null, StatusCodes.CREATED);
   }
 
   static noContent(): ServiceResponse<null> {
@@ -166,8 +166,8 @@ export class ServiceResponse<T = any> {
     return !this.success;
   }
 
-  getData(): T | null {
-    return this.data;
+  getResponseObject(): T | null {
+    return this.responseObject;
   }
 
   getError(): ServiceError | null {
@@ -179,7 +179,7 @@ export class ServiceResponse<T = any> {
     if (this.success) {
       return {
         success: true,
-        data: this.data,
+        responseObject: this.responseObject,
       };
     }
 
