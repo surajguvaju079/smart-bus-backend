@@ -106,7 +106,7 @@ export const openApiSpec: OpenAPIObject = OpenApiBuilder.create({
           content: {
             'application/json': {
               schema: {
-                $ref: '#/components/schemas/UserResponse',
+                $ref: '#/components/schemas/User',
               },
             },
           },
@@ -145,7 +145,7 @@ export const openApiSpec: OpenAPIObject = OpenApiBuilder.create({
           content: {
             'application/json': {
               schema: {
-                $ref: '#/components/schemas/UserResponse',
+                $ref: '#/components/schemas/User',
               },
             },
           },

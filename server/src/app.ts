@@ -67,11 +67,13 @@ class App {
 
   public async listen() {
     try {
-      await runMigrations();
+      if (env.NODE_ENV === 'production') {
+        await runMigrations();
+      }
       this.app.listen(env.PORT, '0.0.0.0', () => {
         console.log(`🚀 Server running on port ${env.PORT}`);
-        console.log(`📚 API docs available at ${env.BASE_URL}:${env.PORT}/api-docs`);
-        console.log(`🏥 Health check at ${env.BASE_URL}:${env.PORT}/health`);
+        console.log(`📚 API docs available at ${env.BASE_URL}/api-docs`);
+        console.log(`🏥 Health check at ${env.BASE_URL}/health`);
       });
     } catch (error) {
       console.error('❌ Failed to start server:', error);

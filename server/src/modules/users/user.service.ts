@@ -34,7 +34,6 @@ export class UserService {
         original: (error as Error).message,
       });
     }
-    // Check if user already exists
   }
 
   async getUserById(id: number): Promise<ServiceResponse> {
@@ -75,21 +74,37 @@ export class UserService {
     }
   }
 
-  async updateUser(id: number, data: UpdateUserDTO): Promise<ServiceResponse<User>> {
-    // If email is being updated, check if it's already in use
-    if (data.email) {
-      const existingResponse = await this.userRepository.findByEmail(data.email);
+  async updateUser(id: number, data: Partial<UpdateUserDTO>): Promise<ServiceResponse> {
+    try {
+      const userExists = await this.userRepository.findById(id);
+      if (!userExists) {
+        return ServiceResponse.notFound('User not found');
+      }
 
-      if (existingResponse) {
-        const existingUser = existingResponse;
-        if (existingUser.id !== id) {
-          return ServiceResponse.alreadyExists('Email already in use');
+      // If email is being updated, check if it's already in use
+      if (data.email) {
+        const existingUser = await this.userRepository.findByEmail(data.email);
+
+        if (existingUser) {
+          if (existingUser.id !== id) {
+            return ServiceResponse.alreadyExists('Email already in use');
+          }
         }
       }
-      return ServiceResponse.internalError('Failed to check existing email');
-    }
 
-    return await this.userRepository.update(id, data);
+      const user = await this.userRepository.update(id, data);
+      if (!user) {
+        return ServiceResponse.internalError('Failed to update user');
+      }
+      console.log('Updated user:', user);
+      const userDto = UserDTO.fromEntity(user as any);
+      console.log('user from response', userDto);
+      return ServiceResponse.ok(userDto);
+    } catch (error) {
+      return ServiceResponse.internalError('An unexpected error ocurred', {
+        original: (error as Error).message,
+      });
+    }
   }
 
   async deleteUser(id: number): Promise<ServiceResponse<null>> {
