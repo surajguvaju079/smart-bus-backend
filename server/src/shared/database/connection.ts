@@ -8,6 +8,7 @@ console.log('TYPE =', typeof env.DB_PASSWORD);
 class Database {
   private pool: Pool;
   private static instance: Database;
+  
 
   private constructor() {
     this.pool = new Pool(databaseConfig);
