@@ -3,6 +3,9 @@ import { DriverRepository } from './driver.repository';
 import { CreateDriverType } from './driver.schema';
 import { UserRepository } from '../users/user.repository';
 import { ROLES } from '@/shared/constants/constant';
+import { ServerResponse } from 'http';
+import { db } from '@/shared/database/connection';
+import { DriverDto } from './driver.dto';
 
 export class DriverService {
   private userRepository = new UserRepository();
@@ -45,6 +48,25 @@ export class DriverService {
       return ServiceResponse.created({ name: driver.name, email: driver.email });
     } catch (error) {
       return ServiceResponse.internalError('An unexpected error occurred', {
+        original: (error as Error).message,
+      });
+    }
+  }
+
+  async get(): Promise<ServiceResponse> {
+    try {
+      const drivers = await this.driverRepository.getAll();
+      if (!drivers) {
+        return ServiceResponse.databaseError('Error in fetching drivers from database');
+      }
+      console.log('drivers', drivers);
+
+      const driverDto = DriverDto.fromEntity(drivers as any);
+      console.log('driverDto', driverDto);
+
+      return ServiceResponse.ok(driverDto);
+    } catch (error) {
+      return ServiceResponse.internalError('An unexpedcted error occured', {
         original: (error as Error).message,
       });
     }

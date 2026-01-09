@@ -12,4 +12,10 @@ export const createDriverSchema = z.object({
   }),
 });
 
+export const getDriversSchema = z.object({
+  params: z.object({
+    id: z.string().transform(Number),
+  }),
+});
+
 export type CreateDriverType = z.infer<typeof createDriverSchema>['body'];

@@ -17,11 +17,17 @@ export class DriverController implements Controller {
   }
 
   private initializeRoutes() {
-    this.router.post('/register', validate(createDriverSchema), this.createDriver);
+    this.router.post('/', validate(createDriverSchema), this.createDriver);
+    this.router.get('/', this.getDrivers);
   }
 
   private createDriver: AsyncHandler = async (req, res) => {
     const response = await this.driverService.create(req.body);
+    res.status(response.statusCode).json(response.toJSON());
+  };
+
+  private getDrivers: AsyncHandler = async (req, res) => {
+    const response = await this.driverService.get();
     res.status(response.statusCode).json(response.toJSON());
   };
 }

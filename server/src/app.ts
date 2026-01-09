@@ -10,10 +10,11 @@ import { UserController } from '@modules/users/user.controller';
 import { openApiSpec } from './docs/swagger';
 import { AuthController } from './modules/auth/auth.controller';
 import { runMigrations } from './database/runMigrations';
+import { DriverController } from './modules/drivers/driver.controller';
 
 class App {
   public app: Application;
-  private controllers = [new UserController(), new AuthController()];
+  private controllers = [new UserController(), new AuthController(), new DriverController()];
 
   constructor() {
     this.app = express();
