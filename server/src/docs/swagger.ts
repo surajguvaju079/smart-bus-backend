@@ -282,4 +282,65 @@ export const openApiSpec: OpenAPIObject = OpenApiBuilder.create({
       },
     },
   })
+  .addPath('/drivers', {
+    post: {
+      summary: 'Register Drivers',
+      tags: ['Drivers'],
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              required: [
+                'name',
+                'email',
+                'password',
+                'license_number',
+                'vehicle_number',
+                'vehicle_type',
+              ],
+              properties: {
+                name: { type: 'string' },
+                vehicle_number: { type: 'string' },
+                vehicle_type: { type: 'string' },
+                license_number: { type: 'string' },
+                email: { type: 'string', format: 'email' },
+                password: { type: 'string' },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        '201': {
+          description: 'Driver Created',
+          content: {
+            'application/json': {
+              schema: {},
+            },
+          },
+        },
+        '400': { description: 'Validation error' },
+        '409': { description: 'Driver already exists' },
+      },
+    },
+    get: {
+      summary: 'Fetch Drivers',
+      tags: ['Drivers'],
+
+      responses: {
+        '200': {
+          description: 'Driver Fetched Successfully',
+          content: {
+            'application/json': {
+              schema: {},
+            },
+          },
+        },
+
+        '403': { description: 'Drivers not found' },
+      },
+    },
+  })
   .getSpec();

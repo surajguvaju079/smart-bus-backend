@@ -21,7 +21,7 @@ export class DriverDto {
   public readonly currentLatitude: Number | null;
   public readonly currentLongitude: Number | null;
   public readonly isAvailable: boolean;
-  public readonly isVerifed: boolean;
+  public readonly isVerified: boolean;
   public readonly createdAt: Date;
   public readonly updatedAt: Date;
   constructor(driver: DriverEntity) {
@@ -31,7 +31,7 @@ export class DriverDto {
     this.currentLongitude = driver.current_longitude ?? null;
     this.currentLatitude = driver.current_latitude ?? null;
     this.isAvailable = driver.is_available;
-    this.isVerifed = driver.is_verified;
+    this.isVerified = driver.is_verified;
     this.email = driver.email;
     this.name = driver.name;
     this.vehicleNumber = driver.vehicle_number;
