@@ -2,16 +2,21 @@ import { db } from '@shared/database/connection';
 import { User, CreateUserDTO, UpdateUserDTO } from './user.schema';
 import { PaginationParams, ServiceResponse } from '@shared/types/index';
 import { StatusCodes } from 'http-status-codes';
+import { BaseRepository } from '@/shared/database/base.repository';
+import { PoolClient } from 'pg';
 
-export class UserRepository {
-  async create(data: { email: string; name: string; password: string }): Promise<User | null> {
+export class UserRepository extends BaseRepository {
+  async create(
+    data: { email: string; name: string; password: string },
+    client?: PoolClient
+  ): Promise<User | null> {
     const query = `
         INSERT INTO users (email, name, password)
         VALUES ($1, $2, $3)
         RETURNING *
       `;
 
-    const result = await db.query(query, [data.email, data.name, data.password]);
+    const result = await this.executor(client).query(query, [data.email, data.name, data.password]);
 
     if (result.rows.length === 0) {
       return null;
@@ -35,14 +40,15 @@ export class UserRepository {
     return result.rows[0];
   }
 
-  async findByEmail(email: string): Promise<User | null> {
+  async findByEmail(email: string, client?: PoolClient): Promise<User | null> {
     const query = `
         SELECT *
         FROM users
         WHERE email = $1
       `;
 
-    const result = await db.query(query, [email]);
+    //const executor = this.executor(client) as { query: (text: string, params?: any[]) => Promise<{ rows: any[] }> };
+    const result = await this.executor(client).query(query, [email]);
     console.log('findByEmail result:', result.rows);
 
     if (result.rows.length === 0) {
@@ -74,7 +80,7 @@ export class UserRepository {
     };
   }
 
-  async update(id: number, data: UpdateUserDTO) {
+  async update(id: number, data: UpdateUserDTO, client?: PoolClient) {
     const fields: string[] = [];
     const values: any[] = [];
     let paramCount = 1;
@@ -110,7 +116,7 @@ export class UserRepository {
         RETURNING *
       `;
 
-    const result = await db.query(query, values);
+    const result = await this.executor(client).query(query, values);
 
     if (!result.rows[0]) {
       return ServiceResponse.notFound('User not found');

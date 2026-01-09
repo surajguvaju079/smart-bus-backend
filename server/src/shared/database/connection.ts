@@ -6,9 +6,8 @@ console.log('ZOD PASSWORD =', JSON.stringify(env.DB_PASSWORD));
 console.log('TYPE =', typeof env.DB_PASSWORD);
 
 class Database {
-  private pool: Pool;
+  public pool: Pool;
   private static instance: Database;
-  
 
   private constructor() {
     this.pool = new Pool(databaseConfig);

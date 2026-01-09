@@ -6,29 +6,39 @@ import { ROLES } from '@/shared/constants/constant';
 import { ServerResponse } from 'http';
 import { db } from '@/shared/database/connection';
 import { DriverDto } from './driver.dto';
+import { PoolClient } from 'pg';
 
 export class DriverService {
   private userRepository = new UserRepository();
   constructor(private driverRepository: DriverRepository) {}
 
   async create(data: CreateDriverType): Promise<ServiceResponse> {
+    let client: PoolClient | null = null;
     try {
-      const userExists = await this.userRepository.findByEmail(data.email);
+      client = await db.getClient();
+      await client.query('BEGIN');
+      const userExists = await this.userRepository.findByEmail(data.email, client);
       if (userExists) {
+        await client.query('ROLLBACK');
         return ServiceResponse.alreadyExists('user with this email already exists');
       }
 
-      const user = await this.userRepository.create({
-        email: data.email,
-        name: data.name,
-        password: data.password,
-      });
+      const user = await this.userRepository.create(
+        {
+          email: data.email,
+          name: data.name,
+          password: data.password,
+        },
+        client
+      );
       if (!user) {
+        await client.query('ROLLBACK');
         return ServiceResponse.internalError('Failed to create user');
       }
 
-      const userUpdate = await this.userRepository.update(user.id, { role: ROLES.DRIVER });
+      const userUpdate = await this.userRepository.update(user.id, { role: ROLES.DRIVER }, client);
       if (!userUpdate) {
+        await client.query('ROLLBACK');
         return ServiceResponse.databaseError('Failed to update user into driver');
       }
 
@@ -41,12 +51,15 @@ export class DriverService {
         current_longitude: null,
       };
 
-      const driver = await this.driverRepository.create(payload);
+      const driver = await this.driverRepository.create(payload, client);
       if (!driver) {
+        await client.query('ROLLBACK');
         return ServiceResponse.databaseError('Failed to create driver');
       }
+      await client.query('COMMIT');
       return ServiceResponse.created({ name: driver.name, email: driver.email });
     } catch (error) {
+      await client.query('ROLLBACK');
       return ServiceResponse.internalError('An unexpected error occurred', {
         original: (error as Error).message,
       });
