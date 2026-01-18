@@ -1,0 +1,37 @@
+services:
+  - type: web
+    name: smart-bus-backend
+    runtime: node
+    region: oregon
+    plan: free
+    branch: develop
+    rootDir: server
+    buildCommand: npm install &&
+      npm run build &&
+      echo "📦 Copying migrations..." &&
+      mkdir -p dist/database/migrations &&
+      cp src/database/migrations/*.sql dist/database/migrations/ &&
+      echo "✅ Migrations copied" &&
+      ls -la dist/database/migrations/
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: BCRYPT_ROUNDS
+        value: 10
+    healthCheckPath: /health
+
+databases:
+  - name: smart-bus-db
+    databaseName: smart_bus
+    user: smart_bus_user
+    region: oregon
+    plan: free

@@ -4,3 +4,10 @@ export const ROLES = {
   DRIVER: 'DRIVER',
   GUEST: 'GUEST',
 } as const;
+
+export const TRIP_STATUS = {
+  ONGOING: 'ONGOING',
+  COMPLETED: 'COMPLETED',
+  CANCELLED: 'CANCELLED',
+  PLANNED: 'PLANNED',
+} as const;

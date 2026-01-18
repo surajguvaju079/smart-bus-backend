@@ -36,4 +36,17 @@ export class DriverRepository extends BaseRepository {
     const result = await db.query(query);
     return result.rows[0];
   }
+
+  public async findById(id: number) {
+    const query = `SELECT d.id, d.current_latitude, d.current_longitude, d.vehicle_number, d.created_at, d.updated_at, d.is_verified, d.is_available,
+    u.id AS user_id,u.name,u.email FROM drivers d INNER JOIN users u
+    ON d.user_id = u.id WHERE d.id = $1`;
+    const result = await db.query(query, [id]);
+    return result.rows[0];
+  }
+  public async findByVehicleNumber(vehicle_number: string) {
+    const query = `SELECT * FROM drivers WHERE vehicle_number = $1`;
+    const result = await db.query(query, [vehicle_number]);
+    return result.rows[0];
+  }
 }
