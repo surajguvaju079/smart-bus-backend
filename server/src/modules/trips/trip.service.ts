@@ -11,20 +11,18 @@ export class TripService {
 
   async create(data: any) {
     try {
+      console.log('Creating trip with data:', data);
       const driverExists = await this.driverRepository.findById(data.driver_id);
       if (!driverExists) {
         return ServiceResponse.notFound('Driver not found');
       }
-      const vehicleNumberExists = await this.driverRepository.findByVehicleNumber(
+      const vehicleIsOngoing = await this.tripRepository.findOngoingTripByVehicle(
         data.vehicle_number
       );
-      if (vehicleNumberExists) {
-        return ServiceResponse.alreadyExists('Trip with this vehicle number already exists');
+      if (vehicleIsOngoing) {
+        return ServiceResponse.alreadyExists('Trip with this vehicle is already moving');
       }
       const trip = await this.tripRepository.createTrip(data);
-      if (!trip) {
-        return ServiceResponse.databaseError('Failed to create trip');
-      }
 
       return ServiceResponse.created(trip);
     } catch (error) {
@@ -36,8 +34,12 @@ export class TripService {
       const trips = await this.tripRepository.getAllTrips(page, limit);
       console.log('Fetched trips:', trips);
 
-      const tripDto = TripDTO.fromEntity(trips as any);
-      return ServiceResponse.ok(tripDto);
+      if (!trips || trips.length === 0) {
+        return ServiceResponse.ok([]);
+      }
+
+      const tripDto = trips.map((trip: any) => TripDTO.fromEntity(trip as any));
+      return ServiceResponse.ok({ trips: tripDto });
     } catch (error) {
       return ServiceResponse.internalError('Failed to fetch trips');
     }
