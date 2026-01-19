@@ -2,16 +2,21 @@ import { db } from '@shared/database/connection';
 import { User, CreateUserDTO, UpdateUserDTO } from './user.schema';
 import { PaginationParams, ServiceResponse } from '@shared/types/index';
 import { StatusCodes } from 'http-status-codes';
+import { BaseRepository } from '@/shared/database/base.repository';
+import { PoolClient } from 'pg';
 
-export class UserRepository {
-  async create(data: { email: string; name: string; password: string }): Promise<User | null> {
+export class UserRepository extends BaseRepository {
+  async create(
+    data: { email: string; name: string; password: string },
+    client?: PoolClient
+  ): Promise<User | null> {
     const query = `
         INSERT INTO users (email, name, password)
         VALUES ($1, $2, $3)
         RETURNING *
       `;
 
-    const result = await db.query(query, [data.email, data.name, data.password]);
+    const result = await this.executor(client).query(query, [data.email, data.name, data.password]);
 
     if (result.rows.length === 0) {
       return null;
@@ -20,7 +25,7 @@ export class UserRepository {
     return result.rows[0];
   }
 
-  async findById(id: number): Promise<ServiceResponse> {
+  async findById(id: number) {
     const query = `
         SELECT *
         FROM users
@@ -35,14 +40,15 @@ export class UserRepository {
     return result.rows[0];
   }
 
-  async findByEmail(email: string): Promise<User | null> {
+  async findByEmail(email: string, client?: PoolClient): Promise<User | null> {
     const query = `
         SELECT *
         FROM users
         WHERE email = $1
       `;
 
-    const result = await db.query(query, [email]);
+    //const executor = this.executor(client) as { query: (text: string, params?: any[]) => Promise<{ rows: any[] }> };
+    const result = await this.executor(client).query(query, [email]);
     console.log('findByEmail result:', result.rows);
 
     if (result.rows.length === 0) {
@@ -74,51 +80,48 @@ export class UserRepository {
     };
   }
 
-  async update(id: number, data: UpdateUserDTO): Promise<ServiceResponse<User>> {
-    try {
-      const fields: string[] = [];
-      const values: any[] = [];
-      let paramCount = 1;
+  async update(id: number, data: UpdateUserDTO, client?: PoolClient) {
+    const fields: string[] = [];
+    const values: any[] = [];
+    let paramCount = 1;
 
-      if (data.email !== undefined) {
-        fields.push(`email = ${paramCount++}`);
-        values.push(data.email);
-      }
-      if (data.name !== undefined) {
-        fields.push(`name = ${paramCount++}`);
-        values.push(data.name);
-      }
+    if (data.email !== undefined) {
+      fields.push(`email = $${paramCount++}`);
+      values.push(data.email);
+    }
+    if (data.name !== undefined) {
+      fields.push(`name = $${paramCount++}`);
+      values.push(data.name);
+    }
+    if (data.role !== undefined) {
+      fields.push(`role = $${paramCount++}`);
+      values.push(data.role);
+    }
+    if (data.phone_number !== undefined) {
+      fields.push(`phone_number = $${paramCount++}`);
+      values.push(data.phone_number);
+    }
+    if (data.profile_image !== undefined) {
+      fields.push(`profile_image = $${paramCount++}`);
+      values.push(data.profile_image);
+    }
 
-      if (fields.length === 0) {
-        return ServiceResponse.badRequest('No fields to update');
-      }
+    fields.push(`updated_at = NOW()`);
+    values.push(id);
 
-      fields.push(`updated_at = NOW()`);
-      values.push(id);
-
-      const query = `
+    const query = `
         UPDATE users
         SET ${fields.join(', ')}
-        WHERE id = ${paramCount}
-        RETURNING id, email, name, created_at as "createdAt", updated_at as "updatedAt"
+        WHERE id = $${paramCount}
+        RETURNING *
       `;
 
-      const result = await db.query<User>(query, values);
+    const result = await this.executor(client).query(query, values);
 
-      if (!result.rows[0]) {
-        return ServiceResponse.notFound('User not found');
-      }
-
-      return ServiceResponse.ok(result.rows[0]);
-    } catch (error: any) {
-      // Handle unique constraint violation
-      if (error.code === '23505') {
-        return ServiceResponse.alreadyExists('Email already in use');
-      }
-
-      console.error('Database error in update:', error);
-      return ServiceResponse.databaseError('Failed to update user', { original: error.message });
+    if (!result.rows[0]) {
+      return ServiceResponse.notFound('User not found');
     }
+    return result.rows[0];
   }
 
   async delete(id: number): Promise<ServiceResponse<null>> {

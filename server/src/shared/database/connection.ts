@@ -3,7 +3,7 @@ import { databaseConfig } from '@config/database';
 import { env } from '@/config/env';
 
 class Database {
-  private pool: Pool;
+  public pool: Pool;
   private static instance: Database;
 
   private constructor() {

@@ -10,10 +10,17 @@ import { UserController } from '@modules/users/user.controller';
 import { openApiSpec } from './docs/swagger';
 import { AuthController } from './modules/auth/auth.controller';
 import { runMigrations } from './database/runMigrations';
+import { DriverController } from './modules/drivers/driver.controller';
+import { TripController } from './modules/trips/trip.controller';
 
 class App {
   public app: Application;
-  private controllers = [new UserController(), new AuthController()];
+  private controllers = [
+    new UserController(),
+    new AuthController(),
+    new DriverController(),
+    new TripController(),
+  ];
 
   constructor() {
     this.app = express();
@@ -67,11 +74,13 @@ class App {
 
   public async listen() {
     try {
-      await runMigrations();
+      if (env.NODE_ENV === 'production') {
+        await runMigrations();
+      }
       this.app.listen(env.PORT, '0.0.0.0', () => {
         console.log(`🚀 Server running on port ${env.PORT}`);
-        console.log(`📚 API docs available at ${env.BASE_URL}:${env.PORT}/api-docs`);
-        console.log(`🏥 Health check at ${env.BASE_URL}:${env.PORT}/health`);
+        console.log(`📚 API docs available at ${env.BASE_URL}/api-docs`);
+        console.log(`🏥 Health check at ${env.BASE_URL}/health`);
       });
     } catch (error) {
       console.error('❌ Failed to start server:', error);
