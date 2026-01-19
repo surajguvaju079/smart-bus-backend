@@ -17,11 +17,10 @@ export class TripLocationController implements Controller {
 
   private initializeRoutes() {
     this.router.post('/', validate(TripLocationSchema), this.createTripLocation);
-    // Define routes here
   }
 
   private createTripLocation = async (req, res) => {
     const response = await this.tripLocationService.create(req.body);
-    res.status(response.StatusCodes).json(response.toJSON());
+    res.status(response.statusCode).json(response.toJSON());
   };
 }

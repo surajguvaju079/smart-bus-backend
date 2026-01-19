@@ -4,7 +4,6 @@ export const createDriverSchema = z.object({
   body: z.object({
     license_number: z.string().min(8, 'License number must be at least 8 numbers.'),
     vehicle_number: z.string().min(4, 'Vehicle number must be at least 4 numbers.'),
-    vehicle_type: z.string().min(3, 'Vehicle name must be atleast 3 letters'),
     email: z.email('Invalid email format'),
     profile_image: z.string().optional(),
     name: z.string().min(2, 'Name must be at least 2 characters'),
