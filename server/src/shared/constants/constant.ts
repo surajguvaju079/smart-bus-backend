@@ -11,3 +11,7 @@ export const TRIP_STATUS = {
   CANCELLED: 'CANCELLED',
   PLANNED: 'PLANNED',
 } as const;
+
+export const REDIS_CHANNELS = {
+  TRIP_LOCATION: 'trip_location',
+};

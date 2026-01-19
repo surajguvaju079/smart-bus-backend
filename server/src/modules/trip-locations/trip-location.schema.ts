@@ -5,7 +5,7 @@ export const TripLocationSchema = z.object({
     trip_id: z.number().nonnegative(),
     latitude: z.number(),
     longitude: z.number(),
-    timestamp: z.string(),
+    timestamp: z.string().optional(),
     speed: z.number().optional(),
     recorded_at: z.string().optional(),
   }),

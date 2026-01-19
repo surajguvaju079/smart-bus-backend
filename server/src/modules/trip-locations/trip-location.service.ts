@@ -4,6 +4,7 @@ import { TripLocationRepository } from './trip-location.repository';
 import { TripLocationType } from './trip-location.schema';
 import { TripDTO } from '../trips/trip.dto';
 import { TripRepository } from '../trips/trip.repository';
+import { TripLocationPublisher } from './trip-location.publisher';
 
 export class TripLocationService {
   private tripRepository = new TripRepository();
@@ -15,9 +16,8 @@ export class TripLocationService {
       if (!tripExists) {
         return ServiceResponse.notFound('Trip not found');
       }
-      const tripLocation = await this.tripLocationRepository.create(data);
-      const trip = TripDTO.fromEntity(tripLocation);
-      return ServiceResponse.created(trip);
+      await TripLocationPublisher.publishTripLocation(data);
+      return ServiceResponse.created({ message: 'Location published successfully' });
     } catch (error) {
       return ServiceResponse.internalError('An unexpected error occurred', {});
     }
