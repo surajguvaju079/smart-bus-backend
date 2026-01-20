@@ -72,29 +72,10 @@ class App {
     this.app.use(errorHandler);
   }
 
-  public async listen() {
-    try {
-      if (env.NODE_ENV === 'production') {
-        await runMigrations();
-      }
-      this.app.listen(env.PORT, '0.0.0.0', () => {
-        console.log(`🚀 Server running on port ${env.PORT}`);
-        console.log(`📚 API docs available at ${env.BASE_URL}/api-docs`);
-        console.log(`🏥 Health check at ${env.BASE_URL}/health`);
-      });
-    } catch (error) {
-      console.error('❌ Failed to start server:', error);
-      process.exit(1);
+  public async init() {
+    if (env.NODE_ENV === 'production') {
+      await runMigrations();
     }
   }
 }
-
-const app = new App();
-app.listen();
-
-// Graceful shutdown
-process.on('SIGTERM', async () => {
-  console.log('SIGTERM received, closing server...');
-  await db.close();
-  process.exit(0);
-});
+export default App;

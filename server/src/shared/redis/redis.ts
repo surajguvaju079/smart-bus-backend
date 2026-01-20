@@ -7,6 +7,8 @@ export const redis = new Redis({
   enableReadyCheck: true,
 });
 
+export const redisSub = redis.duplicate();
+
 redis.on('connect', () => {
   console.log('✅ Redis connected');
 });
