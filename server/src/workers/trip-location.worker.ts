@@ -17,16 +17,16 @@ export const startTripLocationWorker = async () => {
       'GROUP',
       GROUP,
       CONSUMER,
-      'BLOCK',
-      5000,
       'COUNT',
+      5000,
+      'BLOCK',
       100,
       'STREAMS',
       STREAM,
       '>'
     );
     if (!streams) continue;
-    for (const [, message] of streams) {
+    for (const [, messages] of streams as Array<[string, Array<[string, string[]]>]>) {
       for (const [id, fields] of messages) {
         const data = JSON.parse(fields[1]);
         await db.query(
