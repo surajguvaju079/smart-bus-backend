@@ -1,6 +1,6 @@
 import { redis } from '@/shared/redis/redis';
 import { db } from '@/shared/database/connection';
-
+import { getIO } from '@/socket';
 const STREAM = `trip:*:locations`;
 const GROUP = 'trip-location-group';
 const CONSUMER = 'worker-1';
@@ -27,15 +27,39 @@ export const startTripLocationWorker = async () => {
     );
     if (!streams) continue;
     for (const [, messages] of streams as Array<[string, Array<[string, string[]]>]>) {
+      const rows: any[] = [];
+      const messageIds: string[] = [];
+
       for (const [id, fields] of messages) {
         const data = JSON.parse(fields[1]);
+        rows.push([
+          data.trip_id,
+          data.latitude,
+          data.longitude,
+          data.speed ?? null,
+          data.recorded_at,
+        ]);
+        messageIds.push(id);
+
+        const io = getIO();
+        io.to(`trip:${data.trip_id}`).emit('trip:location', data);
+      }
+      if (rows.length > 0) {
+        const values = rows
+          .map((_, i) => `($${i * 5 + 1},$${i * 5 + 2},$${i * 5 + 3},$${i * 5 + 4},$${i * 5 + 5})`)
+          .join(',');
+
+        const flatValues = rows.flat();
+
         await db.query(
           `INSERT INTO trip_locations
-                (trip_id,latitude,longitude,speed,recorder_at)
-                VALUES ($1,$2,$3,$4,$5)`,
-          [data.trip_id, data.latitude, data.longitude, data.speed ?? null, data.recorded_at]
+       (trip_id, latitude, longitude, speed, recorded_at)
+       VALUES ${values}`,
+          flatValues
         );
-        await redis.xack(STREAM, GROUP, id);
+
+        // ACK all messages at once
+        await redis.xack(STREAM, GROUP, ...messageIds);
       }
     }
   }
