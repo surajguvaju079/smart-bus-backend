@@ -46,7 +46,6 @@ export class DriverService {
         user_id: user.id,
         license_number: data.license_number,
         vehicle_number: data.vehicle_number,
-        vehicle_type: data.vehicle_type,
         current_latitude: null,
         current_longitude: null,
       };

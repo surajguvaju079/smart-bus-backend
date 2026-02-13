@@ -22,6 +22,14 @@ services:
     command: npm run dev
     depends_on:
       - postgres
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: always
 
   postgres:
     image: postgres:17
@@ -50,3 +58,4 @@ services:
 
 volumes:
   postgres_data:
+  redis-data:

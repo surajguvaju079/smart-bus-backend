@@ -2,7 +2,6 @@ import { TRIP_STATUS } from '@/shared/constants/constant';
 import { BaseRepository } from '@/shared/database/base.repository';
 import { db } from '@/shared/database/connection';
 import { PoolClient } from 'pg';
-
 export class TripRepository extends BaseRepository {
   public async createTrip(
     data: {
@@ -38,6 +37,12 @@ export class TripRepository extends BaseRepository {
       data.vehicle_number,
     ]);
 
+    return result.rows[0] ?? null;
+  }
+
+  public async findById(id: number, client?: PoolClient) {
+    const query = `SELECT * FROM trips WHERE id = $1`;
+    const result = await this.executor(client).query(query, [id]);
     return result.rows[0] ?? null;
   }
 
