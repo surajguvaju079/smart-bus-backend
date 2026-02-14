@@ -17,6 +17,7 @@ export const startTripLocationWorker = async () => {
     const io = getIO();
 
     for (const [tripId, location] of latestLocations.entries()) {
+      console.log(`Emitting latest location for trip ${tripId}:`, location);
       io.to(`trip:${tripId}`).emit('trip:location', location);
     }
 

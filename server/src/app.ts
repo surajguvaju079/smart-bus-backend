@@ -76,6 +76,7 @@ class App {
     if (env.NODE_ENV === 'production') {
       await runMigrations();
     }
+    console.log("it's running");
   }
 }
 export default App;
