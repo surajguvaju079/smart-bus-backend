@@ -17,6 +17,7 @@ export class TripController implements Controller {
     this.router.post('/create', validate(createTripSchema), this.create);
     this.router.get('/', this.get);
   }
+
   private create: AsyncHandler = async (req, res) => {
     const response = await this.tripService.create(req.body);
     res.status(response.statusCode).json(response.toJSON());

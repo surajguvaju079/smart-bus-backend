@@ -22,6 +22,14 @@ services:
     command: npm run dev
     depends_on:
       - postgres
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: always
 
   postgres:
     image: postgres:17
@@ -44,9 +52,10 @@ services:
       PGADMIN_DEFAULT_EMAIL: admin@example.com
       PGADMIN_DEFAULT_PASSWORD: admin
     ports:
-      - "8081:80"
+      - "8082:8082"
     depends_on:
       - postgres
 
 volumes:
   postgres_data:
+  redis-data:
