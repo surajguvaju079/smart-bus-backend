@@ -14,7 +14,7 @@ export const registerLocationEvents = (socket: any) => {
       };
 
       // Push into Redis Stream (FAST, scalable)
-      await redis.xadd(`trip:${payload.trip_id}:locations`, '*', 'data', JSON.stringify(data));
+      await redis.xadd(`trip:locations`, '*', 'data', JSON.stringify(data));
     }
   );
 };

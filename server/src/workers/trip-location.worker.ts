@@ -37,7 +37,7 @@ export const startTripLocationWorker = async () => {
       STREAM,
       '>'
     )) as unknown as Array<[string, Array<[string, string[]]>]> | null;
-
+    // console.log('Read from stream:', streams);
     if (!streams) continue;
 
     for (const [, messages] of streams as Array<[string, Array<[string, string[]]>]>) {
@@ -54,6 +54,7 @@ export const startTripLocationWorker = async () => {
           data.speed ?? null,
           data.recorded_at,
         ]);
+        console.log('Received trip location message:', data);
 
         messageIds.push(id);
         latestLocations.set(data.trip_id, data);
