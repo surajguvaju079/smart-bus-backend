@@ -46,6 +46,18 @@ export const startTripLocationWorker = async () => {
 
       for (const [id, fields] of messages) {
         const data = JSON.parse(fields[1]);
+        const trip = await db.query('SELECT end_latitude, end_longitude,status FROM trips WHERE id = $1', [data.trip_id]);
+        if(trip.rows.length >0) {
+          const { end_latitude, end_longitude, status } = trip.rows[0];
+          if(status !== 'COMPLETED') {
+            const distanceToEnd = calculateDistance(data.latitude, data.longitude, end_latitude, end_longitude);
+            if (distanceToEnd < 50 && data.speed < 5) {
+              await db.query('UPDATE trips SET status = $1 WHERE id = $2', ['COMPLETED', data.trip_id]);
+              console.log(`Trip ${data.trip_id} marked as COMPLETED`);
+              const io = getIO();
+              io.to(`trip:${data.trip_id}`).emit('trip:completed', { trip_id: data.trip_id});
+            }
+
 
         rows.push([
           data.trip_id,
