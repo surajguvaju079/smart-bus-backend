@@ -6,6 +6,13 @@ const GROUP = 'trip-location-group';
 const CONSUMER = 'worker-1';
 const latestLocations = new Map<number, any>();
 
+/* * This worker listens to the Redis stream for incoming trip location updates.
+ * It processes each message, updates the latest location for each trip, and checks if the trip should be marked as completed.
+ * If a trip is within 50 meters of its end location and moving slower than 5 km/h, it updates the trip status to COMPLETED in the database.
+ * The worker also emits real-time location updates to connected clients via Socket.IO.
+ * This ensures that users receive timely updates on their trips and that completed trips are accurately tracked.
+ */
+
 export const startTripLocationWorker = async () => {
   try {
     await redis.xgroup('CREATE', STREAM, GROUP, '0', 'MKSTREAM');
@@ -46,18 +53,30 @@ export const startTripLocationWorker = async () => {
 
       for (const [id, fields] of messages) {
         const data = JSON.parse(fields[1]);
-        const trip = await db.query('SELECT end_latitude, end_longitude,status FROM trips WHERE id = $1', [data.trip_id]);
-        if(trip.rows.length >0) {
+        const trip = await db.query(
+          'SELECT end_latitude, end_longitude,status FROM trips WHERE id = $1',
+          [data.trip_id]
+        );
+        if (trip.rows.length > 0) {
           const { end_latitude, end_longitude, status } = trip.rows[0];
-          if(status !== 'COMPLETED') {
-            const distanceToEnd = calculateDistance(data.latitude, data.longitude, end_latitude, end_longitude);
+          if (status !== 'COMPLETED') {
+            const distanceToEnd = calculateDistance(
+              data.latitude,
+              data.longitude,
+              end_latitude,
+              end_longitude
+            );
             if (distanceToEnd < 50 && data.speed < 5) {
-              await db.query('UPDATE trips SET status = $1 WHERE id = $2', ['COMPLETED', data.trip_id]);
+              await db.query('UPDATE trips SET status = $1 WHERE id = $2', [
+                'COMPLETED',
+                data.trip_id,
+              ]);
               console.log(`Trip ${data.trip_id} marked as COMPLETED`);
               const io = getIO();
-              io.to(`trip:${data.trip_id}`).emit('trip:completed', { trip_id: data.trip_id});
+              io.to(`trip:${data.trip_id}`).emit('trip:completed', { trip_id: data.trip_id });
             }
-
+          }
+        }
 
         rows.push([
           data.trip_id,
