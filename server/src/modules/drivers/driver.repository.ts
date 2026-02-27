@@ -15,7 +15,7 @@ export class DriverRepository extends BaseRepository {
   ) {
     const query = `INSERT INTO drivers (current_latitude,current_longitude,license_number,user_id,vehicle_number)
     values ($1,$2,$3,$4,$5) returning *`;
-    const result = await this.executor(client).query(query, [
+    const result = await db.query(query, [
       data.current_latitude,
       data.current_longitude,
       data.license_number,

@@ -25,7 +25,7 @@ export class TripRepository extends BaseRepository {
     returning *
     `;
 
-    const result = await this.executor(client).query(query, [
+    const result = await db.query(query, [
       data.driver_id,
       data.start_latitude,
       data.start_longitude,
@@ -42,7 +42,7 @@ export class TripRepository extends BaseRepository {
 
   public async findById(id: number, client?: PoolClient) {
     const query = `SELECT * FROM trips WHERE id = $1`;
-    const result = await this.executor(client).query(query, [id]);
+    const result = await db.query(query, [id]);
     return result.rows[0] ?? null;
   }
 

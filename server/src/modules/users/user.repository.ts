@@ -16,7 +16,7 @@ export class UserRepository extends BaseRepository {
         RETURNING *
       `;
 
-    const result = await this.executor(client).query(query, [data.email, data.name, data.password]);
+    const result = await db.query(query, [data.email, data.name, data.password]);
 
     if (result.rows.length === 0) {
       return null;
@@ -48,7 +48,7 @@ export class UserRepository extends BaseRepository {
       `;
 
     //const executor = this.executor(client) as { query: (text: string, params?: any[]) => Promise<{ rows: any[] }> };
-    const result = await this.executor(client).query(query, [email]);
+    const result = await db.query(query, [email]);
     console.log('findByEmail result:', result.rows);
 
     if (result.rows.length === 0) {
@@ -116,7 +116,7 @@ export class UserRepository extends BaseRepository {
         RETURNING *
       `;
 
-    const result = await this.executor(client).query(query, values);
+    const result = await db.query(query, values);
 
     if (!result.rows[0]) {
       return ServiceResponse.notFound('User not found');
