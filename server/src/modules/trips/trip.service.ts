@@ -44,4 +44,15 @@ export class TripService {
       return ServiceResponse.internalError('Failed to fetch trips');
     }
   }
+  async getTripsByDriverId(driverId: number, page: number, limit: number) {
+    try {
+      console.log(`Fetching trips for driver ID: ${driverId}, page: ${page}, limit: ${limit}`);
+      const trips = await this.tripRepository.getTripsByDriverId(driverId, page, limit);
+      console.log('Fetched trips for driver:', trips);
+      const tripDto = trips.map((trip: any) => TripDTO.fromEntity(trip as any));
+      return ServiceResponse.ok({ trips: tripDto });
+    } catch (error) {
+      return ServiceResponse.internalError('Failed to fetch trips for driver');
+    }
+  }
 }

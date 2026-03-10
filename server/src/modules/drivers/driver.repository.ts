@@ -13,9 +13,16 @@ export class DriverRepository extends BaseRepository {
     },
     client?: PoolClient
   ) {
-    const query = `INSERT INTO drivers (current_latitude,current_longitude,license_number,user_id,vehicle_number)
-    values ($1,$2,$3,$4,$5) returning *`;
-    const result = await db.query(query, [
+    const executor = this.executor(client);
+
+    const query = `
+    INSERT INTO drivers 
+    (current_latitude,current_longitude,license_number,user_id,vehicle_number)
+    VALUES ($1,$2,$3,$4,$5)
+    RETURNING *
+  `;
+
+    const result = await executor.query(query, [
       data.current_latitude,
       data.current_longitude,
       data.license_number,
@@ -32,7 +39,7 @@ export class DriverRepository extends BaseRepository {
     ON d.user_id = u.id
     `;
     const result = await db.query(query);
-    return result.rows[0];
+    return result.rows;
   }
 
   public async findById(id: number) {

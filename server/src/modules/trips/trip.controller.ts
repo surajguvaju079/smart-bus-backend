@@ -16,6 +16,7 @@ export class TripController implements Controller {
   private initializeRoutes() {
     this.router.post('/create', validate(createTripSchema), this.create);
     this.router.get('/', this.get);
+    this.router.get('/driver/:id', this.getByDriverId);
   }
 
   private create: AsyncHandler = async (req, res) => {
@@ -28,6 +29,14 @@ export class TripController implements Controller {
     const limit = Number(req.query.limit) || 10;
 
     const response = await this.tripService.getTrips(page, limit);
+    res.status(response.statusCode).json(response.toJSON());
+  };
+
+  private getByDriverId: AsyncHandler = async (req, res) => {
+    const driverId = Number(req.params.id);
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+    const response = await this.tripService.getTripsByDriverId(driverId, page, limit);
     res.status(response.statusCode).json(response.toJSON());
   };
 }

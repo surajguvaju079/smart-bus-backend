@@ -7,59 +7,59 @@ import { ServerResponse } from 'http';
 import { db } from '@/shared/database/connection';
 import { DriverDto } from './driver.dto';
 import { PoolClient } from 'pg';
-
+import bcrypt from 'bcrypt';
 export class DriverService {
   private userRepository = new UserRepository();
   constructor(private driverRepository: DriverRepository) {}
 
   async create(data: CreateDriverType): Promise<ServiceResponse> {
-    let client: PoolClient | null = null;
     try {
-      client = await db.getClient();
-      await client.query('BEGIN');
-      const userExists = await this.userRepository.findByEmail(data.email, client);
-      if (userExists) {
-        await client.query('ROLLBACK');
-        return ServiceResponse.alreadyExists('user with this email already exists');
-      }
+      return await db.transaction(async (trx) => {
+        const userExists = await this.userRepository.findByEmail(data.email, trx);
 
-      const user = await this.userRepository.create(
-        {
-          email: data.email,
-          name: data.name,
-          password: data.password,
-        },
-        client
-      );
-      if (!user) {
-        await client.query('ROLLBACK');
-        return ServiceResponse.internalError('Failed to create user');
-      }
+        if (userExists) {
+          return ServiceResponse.alreadyExists('User with this email already exists');
+        }
 
-      const userUpdate = await this.userRepository.update(user.id, { role: ROLES.DRIVER }, client);
-      if (!userUpdate) {
-        await client.query('ROLLBACK');
-        return ServiceResponse.databaseError('Failed to update user into driver');
-      }
+        const password = bcrypt.hashSync(data.password, 10);
 
-      const payload = {
-        user_id: user.id,
-        license_number: data.license_number,
-        vehicle_number: data.vehicle_number,
-        current_latitude: null,
-        current_longitude: null,
-      };
+        const user = await this.userRepository.create(
+          {
+            email: data.email,
+            name: data.name,
+            password,
+          },
+          trx
+        );
 
-      const driver = await this.driverRepository.create(payload, client);
-      if (!driver) {
-        await client.query('ROLLBACK');
-        return ServiceResponse.databaseError('Failed to create driver');
-      }
-      await client.query('COMMIT');
-      return ServiceResponse.created({ name: driver.name, email: driver.email });
+        if (!user) {
+          return ServiceResponse.databaseError('Failed to create user');
+        }
+
+        await this.userRepository.update(user.id, { role: ROLES.DRIVER }, trx);
+
+        const driver = await this.driverRepository.create(
+          {
+            user_id: user.id,
+            license_number: data.license_number,
+            vehicle_number: data.vehicle_number,
+            current_latitude: null,
+            current_longitude: null,
+          },
+          trx
+        );
+
+        if (!driver) {
+          return ServiceResponse.databaseError('Failed to create driver');
+        }
+
+        return ServiceResponse.created({
+          name: user.name,
+          email: user.email,
+        });
+      });
     } catch (error) {
-      await client.query('ROLLBACK');
-      return ServiceResponse.internalError('An unexpected error occurred', {
+      return ServiceResponse.internalError('Unexpected error occurred', {
         original: (error as Error).message,
       });
     }
@@ -73,7 +73,7 @@ export class DriverService {
       }
       console.log('drivers', drivers);
 
-      const driverDto = DriverDto.fromEntity(drivers as any);
+      const driverDto = drivers.map((driver) => DriverDto.fromEntity(driver as any));
       console.log('driverDto', driverDto);
 
       return ServiceResponse.ok(driverDto);

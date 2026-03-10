@@ -59,4 +59,10 @@ export class TripRepository extends BaseRepository {
     const result = await db.query(query, [vehicle_number, TRIP_STATUS.ONGOING]);
     return result.rows[0] ?? null;
   }
+  public async getTripsByDriverId(driver_id: number, page: number, limit: number) {
+    const offset = (page - 1) * limit;
+    const query = `SELECT * FROM trips WHERE driver_id = $1 LIMIT $2 OFFSET $3`;
+    const result = await db.query(query, [driver_id, limit, offset]);
+    return result.rows ?? [];
+  }
 }
