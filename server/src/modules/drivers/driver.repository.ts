@@ -54,4 +54,9 @@ export class DriverRepository extends BaseRepository {
     const result = await db.query(query, [vehicle_number]);
     return result.rows[0];
   }
+  public async findByUserId(user_id: number) {
+    const query = `SELECT * FROM drivers WHERE user_id = $1`;
+    const result = await db.query(query, [user_id]);
+    return result.rows[0];
+  }
 }
