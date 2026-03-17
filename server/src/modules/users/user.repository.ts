@@ -10,19 +10,17 @@ export class UserRepository extends BaseRepository {
     data: { email: string; name: string; password: string },
     client?: PoolClient
   ): Promise<User | null> {
+    const executor = this.executor(client);
+
     const query = `
-        INSERT INTO users (email, name, password)
-        VALUES ($1, $2, $3)
-        RETURNING *
-      `;
+    INSERT INTO users (email, name, password)
+    VALUES ($1, $2, $3)
+    RETURNING *
+  `;
 
-    const result = await this.executor(client).query(query, [data.email, data.name, data.password]);
+    const result = await executor.query(query, [data.email, data.name, data.password]);
 
-    if (result.rows.length === 0) {
-      return null;
-    }
-
-    return result.rows[0];
+    return result.rows[0] ?? null;
   }
 
   async findById(id: number) {
@@ -41,21 +39,17 @@ export class UserRepository extends BaseRepository {
   }
 
   async findByEmail(email: string, client?: PoolClient): Promise<User | null> {
+    const executor = this.executor(client);
+
     const query = `
-        SELECT *
-        FROM users
-        WHERE email = $1
-      `;
+    SELECT *
+    FROM users
+    WHERE email = $1
+  `;
 
-    //const executor = this.executor(client) as { query: (text: string, params?: any[]) => Promise<{ rows: any[] }> };
-    const result = await this.executor(client).query(query, [email]);
-    console.log('findByEmail result:', result.rows);
+    const result = await executor.query(query, [email]);
 
-    if (result.rows.length === 0) {
-      return null;
-    }
-
-    return result.rows[0];
+    return result.rows[0] ?? null;
   }
 
   async findAll(pagination: PaginationParams) {
@@ -116,7 +110,8 @@ export class UserRepository extends BaseRepository {
         RETURNING *
       `;
 
-    const result = await this.executor(client).query(query, values);
+    const executor = this.executor(client);
+    const result = await executor.query(query, values);
 
     if (!result.rows[0]) {
       return ServiceResponse.notFound('User not found');

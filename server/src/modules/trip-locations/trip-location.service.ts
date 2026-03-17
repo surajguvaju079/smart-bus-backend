@@ -8,6 +8,7 @@ import { TripLocationPublisher } from './trip-location.publisher';
 
 export class TripLocationService {
   private tripRepository = new TripRepository();
+  //private tripLocationPublisher = new TripLocationPublisher();
   constructor(private tripLocationRepository: TripLocationRepository) {}
 
   async create(data: TripLocationType): Promise<ServiceResponse> {
@@ -16,6 +17,7 @@ export class TripLocationService {
       if (!tripExists) {
         return ServiceResponse.notFound('Trip not found');
       }
+      console.log('Creating trip location with data:', data);
       await TripLocationPublisher.publishTripLocation(data);
       return ServiceResponse.created({ message: 'Location published successfully' });
     } catch (error) {

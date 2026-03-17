@@ -5,9 +5,13 @@ import { ServiceResponse } from '@/shared/types';
 import { User } from '../users/user.schema';
 import { generateAuthToken, generateRefreshToken } from '@/shared/middleware/auth.middleware';
 import { UserDTO } from '../users/user.dto';
+import { DriverRepository } from '../drivers/driver.repository';
 
 export class AuthService {
-  constructor(private authRepository: AuthRepository) {}
+  constructor(
+    private authRepository: AuthRepository,
+    private driverRepository: DriverRepository
+  ) {}
   async loginUser(data: { email: string; password: string }): Promise<ServiceResponse> {
     const user = await this.authRepository.findByEmail(data.email);
     console.log('Fetched user:', user);
@@ -33,9 +37,15 @@ export class AuthService {
 
     const userDto = UserDTO.fromEntity(user as any);
     console.log('userDto:', userDto);
+    let driver = null;
+    if (userDto.role === 'DRIVER') {
+      const driverData = await this.driverRepository.findByUserId(user.id);
+
+      driver = { driver_id: driverData.id, vehicle_number: driverData.vehicle_number };
+    }
 
     return ServiceResponse.ok({
-      user: userDto,
+      user: { ...userDto, ...driver },
       access_token,
       refresh_token,
     });

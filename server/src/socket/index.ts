@@ -19,7 +19,9 @@ export const initSocket = async (server: http.Server) => {
     registerLocationEvents(socket);
 
     socket.on('join-trip', (tripId: number) => {
+      console.log('joining trip:', tripId);
       socket.join(`trip:${tripId}`);
+      console.log(`socket ${socket.id} joined room trip:${tripId}`);
     });
     socket.on('disconnect', () => {
       console.log('user disconnected:', socket.id);
