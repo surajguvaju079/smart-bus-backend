@@ -5,6 +5,9 @@ CREATE TABLE IF NOT EXISTS trip_locations (
     longitude DECIMAL(10,7),
     speed DECIMAL(5,2),
     recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    start_time TIMESTAMP NOT NULL,
+    end_time TIMESTAMP,
+
     CONSTRAINT fk_trip_location
         FOREIGN KEY (trip_id)
         REFERENCES trips(id)
