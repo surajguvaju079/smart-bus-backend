@@ -23,6 +23,7 @@ export class TripLocationPublisher {
     longitude: number;
     speed?: number;
   }) {
+    console.log('Publishing trip location: before sending to ui', data);
     const payload = {
       ...data,
       recorded_at: new Date().toISOString(),

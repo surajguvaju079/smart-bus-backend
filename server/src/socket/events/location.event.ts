@@ -4,6 +4,7 @@ export const registerLocationEvents = (socket: any) => {
   socket.on(
     'driver:location',
     async (payload: { trip_id: number; latitude: number; longitude: number; speed?: number }) => {
+      console.log('Received location update from driver:', payload);
       if (!payload.trip_id) {
         console.error('trip_id is required in location payload');
         return;

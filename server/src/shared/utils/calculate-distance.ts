@@ -10,7 +10,7 @@
  *where the trip is automatically marked completed,
  * when the vehicle enters a 50-meter radius of the destination coordinates.
  */
-function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
+export default function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
   const R = 6371000;
   const toRad = (value: number) => (value * Math.PI) / 180;
 
