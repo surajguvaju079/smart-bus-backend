@@ -1,6 +1,7 @@
 import { redis } from '@/shared/redis/redis';
 import { db } from '@/shared/database/connection';
 import { getIO } from '@/socket';
+import calculateDistance from '@/shared/utils/calculate-distance';
 const STREAM = 'trip-locations';
 const GROUP = 'trip-location-group';
 const CONSUMER = 'worker-1';
@@ -22,8 +23,9 @@ export const startTripLocationWorker = async () => {
 
   setInterval(() => {
     const io = getIO();
-
+    console.log('Emitting latest locations for trips:', Array.from(latestLocations.entries()));
     for (const [tripId, location] of latestLocations.entries()) {
+      console.log(`Emitting latest location for trip ${tripId}:`, location);
       console.log(`Emitting latest location for trip ${tripId}:`, location);
       io.to(`trip:${tripId}`).emit('trip:location', location);
     }
@@ -44,7 +46,7 @@ export const startTripLocationWorker = async () => {
       STREAM,
       '>'
     )) as unknown as Array<[string, Array<[string, string[]]>]> | null;
-    // console.log('Read from stream:', streams);
+    console.log('Read from stream:', streams);
     if (!streams) continue;
 
     for (const [, messages] of streams as Array<[string, Array<[string, string[]]>]>) {
