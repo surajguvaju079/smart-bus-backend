@@ -12,7 +12,7 @@ import { runMigrations } from './database/runMigrations';
 import { DriverController } from './modules/drivers/driver.controller';
 import { TripController } from './modules/trips/trip.controller';
 import { TripLocationController } from './modules/trip-locations/trip-location.controller';
-import { RouteController } from './modules/routes/route.controller';
+import { RouteController } from '@/modules/routes/route.controller';
 
 class App {
   public app: Application;

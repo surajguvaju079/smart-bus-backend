@@ -1,12 +1,12 @@
 import { AsyncHandler, Controller } from '@/shared/types';
 import { RouteRepository } from './route.repository';
-import { RouteService } from './route.service';
+import { RouteService } from '@/modules/routes/route.service';
 import express from 'express';
 import { validate } from '@/shared/middleware/validation.middleware';
 import { createRouteSchema } from './route.schema';
 export class RouteController implements Controller {
   public path = '/routes';
-  private routeService: RouteService;
+  public routeService: RouteService;
   public router = express.Router();
 
   constructor() {
@@ -18,6 +18,7 @@ export class RouteController implements Controller {
   }
 
   private createRoute: AsyncHandler = async (req, res) => {
+    console.log('Received request to create route with body: is here', req.body);
     const name = req.body.name;
     const serviceResponse = await this.routeService.createRoute(name);
     res.status(serviceResponse.statusCode).json(serviceResponse.toJSON());

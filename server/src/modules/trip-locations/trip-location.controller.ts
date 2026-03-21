@@ -1,4 +1,4 @@
-import { Controller } from '@/shared/types';
+import { AsyncHandler, Controller } from '@/shared/types';
 import { TripLocationRepository } from './trip-location.repository';
 import { TripLocationService } from './trip-location.service';
 import { Router } from 'express';
@@ -19,7 +19,7 @@ export class TripLocationController implements Controller {
     this.router.post('/', validate(TripLocationSchema), this.createTripLocation);
   }
 
-  private createTripLocation = async (req, res) => {
+  private createTripLocation: AsyncHandler = async (req, res) => {
     const response = await this.tripLocationService.create(req.body);
     res.status(response.statusCode).json(response.toJSON());
   };
