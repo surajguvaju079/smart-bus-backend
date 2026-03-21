@@ -1,4 +1,3 @@
-// src/database/runMigrations.ts
 import fs from 'fs';
 import path from 'path';
 import { Client } from 'pg';

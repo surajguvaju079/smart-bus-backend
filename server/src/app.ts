@@ -4,7 +4,6 @@ import cors from 'cors';
 import compression from 'compression';
 import swaggerUi from 'swagger-ui-express';
 import { env } from '@config/env';
-import { db } from '@shared/database/connection';
 import { errorHandler, notFoundHandler } from '@shared/middleware/error.middleware';
 import { UserController } from '@modules/users/user.controller';
 import { openApiSpec } from './docs/swagger';
@@ -13,6 +12,7 @@ import { runMigrations } from './database/runMigrations';
 import { DriverController } from './modules/drivers/driver.controller';
 import { TripController } from './modules/trips/trip.controller';
 import { TripLocationController } from './modules/trip-locations/trip-location.controller';
+import { RouteController } from './modules/routes/route.controller';
 
 class App {
   public app: Application;
@@ -22,6 +22,7 @@ class App {
     new DriverController(),
     new TripController(),
     new TripLocationController(),
+    new RouteController(),
   ];
 
   constructor() {
