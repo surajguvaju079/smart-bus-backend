@@ -1,11 +1,14 @@
 import { z } from 'zod';
 
 export const createRouteStopSchema = z.object({
+  params: z.object({
+    routeId: z.coerce.number().nonnegative(),
+  }),
   body: z.object({
-    routeId: z.number(),
-    latitude: z.number(),
-    longitude: z.number(),
-    stopOrder: z.number(),
+    latitude: z.number().nonoptional(),
+    longitude: z.number().nonoptional(),
+    stopOrder: z.number().nonoptional(),
+    name: z.string().nonoptional(),
   }),
 });
 

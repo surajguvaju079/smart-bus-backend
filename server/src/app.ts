@@ -13,6 +13,7 @@ import { DriverController } from './modules/drivers/driver.controller';
 import { TripController } from './modules/trips/trip.controller';
 import { TripLocationController } from './modules/trip-locations/trip-location.controller';
 import { RouteController } from '@/modules/routes/route.controller';
+import { RouteStopController } from './modules/route-stops/route-stop.controller';
 
 class App {
   public app: Application;
@@ -23,6 +24,7 @@ class App {
     new TripController(),
     new TripLocationController(),
     new RouteController(),
+    new RouteStopController(),
   ];
 
   constructor() {

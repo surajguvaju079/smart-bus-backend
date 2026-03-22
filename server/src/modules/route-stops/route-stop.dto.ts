@@ -4,6 +4,7 @@ export interface RouteStopEntity {
   latitude: number;
   longitude: number;
   stopOrder: number;
+  name: string;
 }
 
 export class RouteStopDto {
@@ -12,6 +13,7 @@ export class RouteStopDto {
   public readonly latitude: number;
   public readonly longitude: number;
   public readonly stopOrder: number;
+  public readonly name: string;
 
   constructor(routeStop: RouteStopEntity) {
     this.id = routeStop.id;
@@ -19,6 +21,7 @@ export class RouteStopDto {
     this.latitude = routeStop.latitude;
     this.longitude = routeStop.longitude;
     this.stopOrder = routeStop.stopOrder;
+    this.name = routeStop.name;
 
     Object.freeze(this);
   }
