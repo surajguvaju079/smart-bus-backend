@@ -23,10 +23,7 @@ export const startTripLocationWorker = async () => {
 
   setInterval(() => {
     const io = getIO();
-    console.log('Emitting latest locations for trips:', Array.from(latestLocations.entries()));
     for (const [tripId, location] of latestLocations.entries()) {
-      console.log(`Emitting latest location for trip ${tripId}:`, location);
-      console.log(`Emitting latest location for trip ${tripId}:`, location);
       io.to(`trip:${tripId}`).emit('trip:location', location);
     }
 

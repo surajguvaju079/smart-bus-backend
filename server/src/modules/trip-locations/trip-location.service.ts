@@ -17,7 +17,6 @@ export class TripLocationService {
       if (!tripExists) {
         return ServiceResponse.notFound('Trip not found');
       }
-      console.log('Creating trip location with data:', data);
       await TripLocationPublisher.publishTripLocation(data);
       return ServiceResponse.created({ message: 'Location published successfully' });
     } catch (error) {
