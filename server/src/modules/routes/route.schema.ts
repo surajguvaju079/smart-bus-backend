@@ -18,4 +18,22 @@ export const getRouteSchema = z.object({
   }),
 });
 
+export const addRouteStopsSchema = z.object({
+  params: z.object({
+    id: z.coerce.number().int().positive(),
+  }),
+  body: z.object({
+    stops: z
+      .array(
+        z.object({
+          name: z.string().min(1),
+          latitude: z.number(),
+          longitude: z.number(),
+          order: z.number().int().positive(),
+        })
+      )
+      .min(1),
+  }),
+});
+
 export type CreateRouteDTO = z.infer<typeof createRouteSchema>['body'];

@@ -57,18 +57,13 @@ export class RouteService {
     }
   }
 
-  async getRoute(id: number): Promise<ServiceResponse<any>> {
+  async getRoute(id: number): Promise<ServiceResponse<RouteWithStopsDTO>> {
     try {
-      const route = await this.routeRepository.getRouteById(id);
-      if (!route) {
-        return ServiceResponse.notFound('Route not found.');
-      }
       const rows = await this.routeRepository.getRouteWithStops(id);
 
       if (!rows || rows.length === 0) {
         return ServiceResponse.notFound('Route not found');
       }
-      console.log('rows are', rows);
 
       const routeDTO = RouteWithStopsDTO.fromRows(rows);
 

@@ -1,9 +1,13 @@
 import { ServiceResponse } from '@/shared/types';
 import { RouteStopRepository } from './route-stop.repository';
 import { RouteStopDto } from './route-stop.dto';
+import { RouteRepository } from '../routes/route.repository';
 
 export class RouteStopService {
-  constructor(private routeStopRepository: RouteStopRepository) {}
+  private routeRepository: RouteRepository;
+  constructor(private routeStopRepository: RouteStopRepository) {
+    this.routeRepository = new RouteRepository();
+  }
 
   async createRouteStop(
     routeId: number,
@@ -13,7 +17,6 @@ export class RouteStopService {
     name: string
   ): Promise<ServiceResponse<any>> {
     try {
-      console.log('stop order', stopOrder);
       const routeStop = await this.routeStopRepository.createRouteStop(
         routeId,
         name,
@@ -32,6 +35,29 @@ export class RouteStopService {
       return ServiceResponse.internalError(
         'An unexpected error occurred while creating route stop'
       );
+    }
+  }
+  async addRouteStops(routeId: number, stops: any[]): Promise<ServiceResponse<any>> {
+    try {
+      const route = await this.routeRepository.getRouteById(routeId);
+
+      if (!route) {
+        return ServiceResponse.notFound('Route not found');
+      }
+
+      const orders = stops.map((s) => s.order);
+      const uniqueOrders = new Set(orders);
+
+      if (orders.length !== uniqueOrders.size) {
+        return ServiceResponse.badRequest('Duplicate stop order detected');
+      }
+
+      const insertedStops = await this.routeStopRepository.addRouteStops(routeId, stops);
+
+      return ServiceResponse.created(insertedStops);
+    } catch (error) {
+      console.error('AddRouteStops Error:', error);
+      return ServiceResponse.internalError('Failed to add stops');
     }
   }
 }
