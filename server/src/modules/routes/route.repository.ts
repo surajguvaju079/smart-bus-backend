@@ -1,9 +1,10 @@
 import { db } from '@/shared/database/connection';
+import { Client, PoolClient } from 'pg';
 
 export class RouteRepository {
-  async createRoute(name: string) {
+  async createRoute(name: string, client?: PoolClient) {
     const query = 'INSERT INTO routes (name) VALUES ($1) RETURNING *';
-    const result = await db.query(query, [name]);
+    const result = await client.query(query, [name]);
     return result.rows[0] ?? null;
   }
 

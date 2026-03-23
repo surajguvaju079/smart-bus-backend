@@ -1,4 +1,5 @@
 import { db } from '@/shared/database/connection';
+import { PoolClient } from 'pg';
 
 export class RouteStopRepository {
   async createRouteStop(
@@ -13,7 +14,7 @@ export class RouteStopRepository {
     return result.rows[0] ?? null;
   }
 
-  async addRouteStops(routeId: number, stops: any[]) {
+  async addRouteStops(routeId: number, stops: any[], client?: PoolClient) {
     const values: any[] = [];
     const placeholders: string[] = [];
 
@@ -33,7 +34,7 @@ export class RouteStopRepository {
     RETURNING *
   `;
 
-    const result = await db.query(query, values);
+    const result = await client.query(query, values);
     return result.rows;
   }
 }

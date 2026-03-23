@@ -18,11 +18,14 @@ export const getRouteSchema = z.object({
   }),
 });
 
-export const addRouteStopsSchema = z.object({
-  params: z.object({
-    id: z.coerce.number().int().positive(),
+export const createFullRouteSchema = z.object({
+  query: z.object({
+    tripId: z.coerce.number().int().positive().optional(),
   }),
+
   body: z.object({
+    name: z.string().min(1),
+
     stops: z
       .array(
         z.object({

@@ -1,7 +1,7 @@
 import { TRIP_STATUS } from '@/shared/constants/constant';
 import { BaseRepository } from '@/shared/database/base.repository';
 import { db } from '@/shared/database/connection';
-import { PoolClient } from 'pg';
+import { Pool, PoolClient } from 'pg';
 export class TripRepository extends BaseRepository {
   public async createTrip(
     data: {
@@ -50,7 +50,6 @@ export class TripRepository extends BaseRepository {
     const offset = (page - 1) * limit;
     const query = `SELECT * FROM trips LIMIT $1 OFFSET $2 `;
     const result = await db.query(query, [limit, offset]);
-    console.log('getAllTrips result:', result.rows);
     return result.rows ?? [];
   }
 
@@ -64,5 +63,12 @@ export class TripRepository extends BaseRepository {
     const query = `SELECT * FROM trips WHERE driver_id = $1 LIMIT $2 OFFSET $3`;
     const result = await db.query(query, [driver_id, limit, offset]);
     return result.rows ?? [];
+  }
+
+  async updateTripRoute(tripId: number, routeId: number, client?: PoolClient) {
+    const query = `
+    UPDATE trips set route_id = $1 where id = $2
+    `;
+    await client.query(query, [routeId, tripId]);
   }
 }
