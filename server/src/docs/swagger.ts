@@ -20,6 +20,8 @@ export const openApiSpec: OpenAPIObject = OpenApiBuilder.create({
     { name: 'Drivers', description: 'Driver management endpoints' },
     { name: 'Trips', description: 'Trip management endpoints' },
     { name: 'Trip Locations', description: 'Trip location publishing endpoints' },
+    { name: 'Routes', description: 'Route management endpoints' },
+    { name: 'Route Stops', description: 'Route stop management endpoints' },
   ],
 })
   .addSecurityScheme('bearerAuth', {
@@ -214,6 +216,111 @@ export const openApiSpec: OpenAPIObject = OpenApiBuilder.create({
       recordedAt: { type: ['string', 'null'], format: 'date-time', example: null },
     },
     required: ['id', 'tripId', 'latitude', 'longitude', 'timestamp'],
+  })
+
+  .addSchema('RouteStopDto', {
+    type: 'object',
+    properties: {
+      id: { type: 'integer', example: 1 },
+      routeId: { type: 'integer', example: 1 },
+      latitude: { type: 'number', example: 27.7172 },
+      longitude: { type: 'number', example: 85.324 },
+      stopOrder: { type: 'integer', example: 1 },
+      name: { type: 'string', example: 'Koteshwor' },
+    },
+    required: ['id', 'routeId', 'latitude', 'longitude', 'stopOrder', 'name'],
+  })
+  .addSchema('RouteDto', {
+    type: 'object',
+    properties: {
+      id: { type: 'integer', example: 1 },
+      name: { type: 'string', example: 'Kathmandu Ring Road' },
+      createdAt: { type: 'string', format: 'date-time' },
+      updatedAt: { type: 'string', format: 'date-time' },
+    },
+    required: ['id', 'name', 'createdAt', 'updatedAt'],
+  })
+  .addSchema('RouteWithStopsDto', {
+    type: 'object',
+    properties: {
+      id: { type: 'integer', example: 1 },
+      name: { type: 'string', example: 'Kathmandu Ring Road' },
+      createdAt: { type: 'string', format: 'date-time' },
+      updatedAt: { type: 'string', format: 'date-time' },
+      stops: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer', example: 1 },
+            name: { type: 'string', example: 'Koteshwor' },
+            latitude: { type: 'number', example: 27.6781 },
+            longitude: { type: 'number', example: 85.3498 },
+            order: { type: 'integer', example: 1 },
+          },
+          required: ['id', 'name', 'latitude', 'longitude', 'order'],
+        },
+      },
+    },
+    required: ['id', 'name', 'createdAt', 'updatedAt', 'stops'],
+  })
+  .addSchema('RouteCreateRequest', {
+    type: 'object',
+    required: ['name'],
+    properties: {
+      name: { type: 'string', minLength: 2, example: 'Kathmandu Ring Road' },
+    },
+  })
+  .addSchema('RouteStopCreateRequest', {
+    type: 'object',
+    required: ['latitude', 'longitude', 'stopOrder', 'name'],
+    properties: {
+      latitude: { type: 'number', example: 27.6781 },
+      longitude: { type: 'number', example: 85.3498 },
+      stopOrder: { type: 'number', example: 1 },
+      name: { type: 'string', example: 'Koteshwor' },
+    },
+  })
+  .addSchema('BulkRouteStopsCreateRequest', {
+    type: 'object',
+    required: ['stops'],
+    properties: {
+      stops: {
+        type: 'array',
+        minItems: 1,
+        items: {
+          type: 'object',
+          required: ['name', 'latitude', 'longitude', 'order'],
+          properties: {
+            name: { type: 'string', minLength: 1, example: 'Koteshwor' },
+            latitude: { type: 'number', example: 27.6781 },
+            longitude: { type: 'number', example: 85.3498 },
+            order: { type: 'integer', minimum: 1, example: 1 },
+          },
+        },
+      },
+    },
+  })
+  .addSchema('FullRouteCreateRequest', {
+    type: 'object',
+    required: ['name', 'stops'],
+    properties: {
+      name: { type: 'string', minLength: 1, example: 'Kathmandu Ring Road' },
+      stops: {
+        type: 'array',
+        minItems: 1,
+        items: {
+          type: 'object',
+          required: ['name', 'latitude', 'longitude', 'order'],
+          properties: {
+            name: { type: 'string', minLength: 1, example: 'Koteshwor' },
+            latitude: { type: 'number', example: 27.6781 },
+            longitude: { type: 'number', example: 85.3498 },
+            order: { type: 'integer', minimum: 1, example: 1 },
+          },
+        },
+      },
+    },
   })
   .addSchema('UserCreateRequest', {
     type: 'object',
@@ -414,6 +521,75 @@ export const openApiSpec: OpenAPIObject = OpenApiBuilder.create({
           message: { type: 'string', example: 'Location published successfully' },
         },
         required: ['message'],
+      },
+    },
+    required: ['success', 'responseObject'],
+  })
+
+  .addSchema('RouteSingleResponse', {
+    type: 'object',
+    properties: {
+      success: { type: 'boolean', example: true },
+      responseObject: { $ref: '#/components/schemas/RouteDto' },
+    },
+    required: ['success', 'responseObject'],
+  })
+  .addSchema('RouteListResponse', {
+    type: 'object',
+    properties: {
+      success: { type: 'boolean', example: true },
+      responseObject: {
+        type: 'object',
+        properties: {
+          data: {
+            type: 'array',
+            items: { $ref: '#/components/schemas/RouteDto' },
+          },
+          meta: { $ref: '#/components/schemas/PaginationMeta' },
+        },
+        required: ['data', 'meta'],
+      },
+    },
+    required: ['success', 'responseObject'],
+  })
+  .addSchema('RouteWithStopsResponse', {
+    type: 'object',
+    properties: {
+      success: { type: 'boolean', example: true },
+      responseObject: { $ref: '#/components/schemas/RouteWithStopsDto' },
+    },
+    required: ['success', 'responseObject'],
+  })
+  .addSchema('RouteStopSingleResponse', {
+    type: 'object',
+    properties: {
+      success: { type: 'boolean', example: true },
+      responseObject: { $ref: '#/components/schemas/RouteStopDto' },
+    },
+    required: ['success', 'responseObject'],
+  })
+  .addSchema('RouteStopListResponse', {
+    type: 'object',
+    properties: {
+      success: { type: 'boolean', example: true },
+      responseObject: {
+        type: 'array',
+        items: { $ref: '#/components/schemas/RouteStopDto' },
+      },
+    },
+    required: ['success', 'responseObject'],
+  })
+  .addSchema('FullRouteCreateResponse', {
+    type: 'object',
+    properties: {
+      success: { type: 'boolean', example: true },
+      responseObject: {
+        type: 'object',
+        properties: {
+          routeId: { type: 'integer', example: 1 },
+          linkedToTrip: { type: 'boolean', example: true },
+        },
+        required: ['routeId', 'linkedToTrip'],
       },
     },
     required: ['success', 'responseObject'],
@@ -927,6 +1103,297 @@ export const openApiSpec: OpenAPIObject = OpenApiBuilder.create({
         },
         '404': {
           description: 'Trip not found',
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/ErrorResponse' },
+            },
+          },
+        },
+        '500': {
+          description: 'Internal server error',
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/ErrorResponse' },
+            },
+          },
+        },
+      },
+    },
+  })
+
+  .addPath('/routes', {
+    post: {
+      summary: 'Create route',
+      tags: ['Routes'],
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: { $ref: '#/components/schemas/RouteCreateRequest' },
+          },
+        },
+      },
+      responses: {
+        '201': {
+          description: 'Route created successfully',
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/RouteSingleResponse' },
+            },
+          },
+        },
+        '400': {
+          description: 'Validation error',
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/ErrorResponse' },
+            },
+          },
+        },
+        '500': {
+          description: 'Internal server error',
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/ErrorResponse' },
+            },
+          },
+        },
+      },
+    },
+    get: {
+      summary: 'List routes',
+      tags: ['Routes'],
+      parameters: [
+        {
+          name: 'page',
+          in: 'query',
+          required: false,
+          schema: { type: 'integer', minimum: 1, default: 1 },
+        },
+        {
+          name: 'limit',
+          in: 'query',
+          required: false,
+          schema: { type: 'integer', minimum: 1, maximum: 100, default: 10 },
+        },
+      ],
+      responses: {
+        '200': {
+          description: 'Routes fetched successfully',
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/RouteListResponse' },
+            },
+          },
+        },
+        '400': {
+          description: 'Validation error',
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/ErrorResponse' },
+            },
+          },
+        },
+        '500': {
+          description: 'Internal server error',
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/ErrorResponse' },
+            },
+          },
+        },
+      },
+    },
+  })
+
+  .addPath('/routes/{id}', {
+    get: {
+      summary: 'Get route by ID with stops',
+      tags: ['Routes'],
+      parameters: [
+        {
+          name: 'id',
+          in: 'path',
+          required: true,
+          schema: { type: 'integer', minimum: 0 },
+        },
+      ],
+      responses: {
+        '200': {
+          description: 'Route found',
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/RouteWithStopsResponse' },
+            },
+          },
+        },
+        '404': {
+          description: 'Route not found',
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/ErrorResponse' },
+            },
+          },
+        },
+        '500': {
+          description: 'Internal server error',
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/ErrorResponse' },
+            },
+          },
+        },
+      },
+    },
+  })
+
+  .addPath('/routes/full', {
+    post: {
+      summary: 'Create full route with stops and optionally link to trip',
+      tags: ['Routes'],
+      parameters: [
+        {
+          name: 'trip_id',
+          in: 'query',
+          required: false,
+          schema: { type: 'integer', minimum: 1 },
+          description: 'Optional trip ID to link the new route to an existing trip',
+        },
+      ],
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: { $ref: '#/components/schemas/FullRouteCreateRequest' },
+          },
+        },
+      },
+      responses: {
+        '200': {
+          description: 'Full route created successfully',
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/FullRouteCreateResponse' },
+            },
+          },
+        },
+        '400': {
+          description: 'Validation error or duplicate stop order',
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/ErrorResponse' },
+            },
+          },
+        },
+        '404': {
+          description: 'Trip not found',
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/ErrorResponse' },
+            },
+          },
+        },
+        '500': {
+          description: 'Internal server error',
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/ErrorResponse' },
+            },
+          },
+        },
+      },
+    },
+  })
+
+  .addPath('/route-stops/{routeId}', {
+    post: {
+      summary: 'Create a single route stop',
+      tags: ['Route Stops'],
+      parameters: [
+        {
+          name: 'routeId',
+          in: 'path',
+          required: true,
+          schema: { type: 'integer', minimum: 0 },
+        },
+      ],
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: { $ref: '#/components/schemas/RouteStopCreateRequest' },
+          },
+        },
+      },
+      responses: {
+        '201': {
+          description: 'Route stop created successfully',
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/RouteStopSingleResponse' },
+            },
+          },
+        },
+        '400': {
+          description: 'Validation error',
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/ErrorResponse' },
+            },
+          },
+        },
+        '500': {
+          description: 'Internal server error',
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/ErrorResponse' },
+            },
+          },
+        },
+      },
+    },
+  })
+
+  .addPath('/route-stops/bulk/{id}', {
+    post: {
+      summary: 'Add multiple route stops to a route',
+      tags: ['Route Stops'],
+      parameters: [
+        {
+          name: 'id',
+          in: 'path',
+          required: true,
+          schema: { type: 'integer', minimum: 1 },
+          description: 'Route ID',
+        },
+      ],
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: { $ref: '#/components/schemas/BulkRouteStopsCreateRequest' },
+          },
+        },
+      },
+      responses: {
+        '201': {
+          description: 'Route stops added successfully',
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/RouteStopListResponse' },
+            },
+          },
+        },
+        '400': {
+          description: 'Validation error or duplicate stop order detected',
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/ErrorResponse' },
+            },
+          },
+        },
+        '404': {
+          description: 'Route not found',
           content: {
             'application/json': {
               schema: { $ref: '#/components/schemas/ErrorResponse' },
