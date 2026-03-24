@@ -3,7 +3,12 @@ import { RouteRepository } from './route.repository';
 import { RouteService } from '@/modules/routes/route.service';
 import express from 'express';
 import { validate } from '@/shared/middleware/validation.middleware';
-import { createRouteSchema, getAllRoutesSchema, getRouteSchema } from './route.schema';
+import {
+  createFullRouteSchema,
+  createRouteSchema,
+  getAllRoutesSchema,
+  getRouteSchema,
+} from './route.schema';
 export class RouteController implements Controller {
   public path = '/routes';
   public routeService: RouteService;
@@ -17,6 +22,7 @@ export class RouteController implements Controller {
     this.router.post('/', validate(createRouteSchema), this.createRoute);
     this.router.get('/', validate(getAllRoutesSchema), this.getRoutes);
     this.router.get('/:id', validate(getRouteSchema), this.getRoute);
+    this.router.post('/full', validate(createFullRouteSchema), this.createFullRoute);
   }
 
   private createRoute: AsyncHandler = async (req, res) => {
@@ -42,6 +48,17 @@ export class RouteController implements Controller {
   private getRoute: AsyncHandler = async (req, res) => {
     const id = req.params.id;
     const serviceResponse = await this.routeService.getRoute(Number(id));
+    res.status(serviceResponse.statusCode).json(serviceResponse.toJSON());
+  };
+
+  private createFullRoute: AsyncHandler = async (req, res) => {
+    const { name, stops } = req.body;
+    const { trip_id } = req.query as any;
+    const id = Number(trip_id) ?? null;
+    console.log('id of trip is', id);
+
+    const serviceResponse = await this.routeService.createFullRoute(String(name), stops, id);
+
     res.status(serviceResponse.statusCode).json(serviceResponse.toJSON());
   };
 }

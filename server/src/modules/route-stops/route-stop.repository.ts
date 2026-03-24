@@ -15,6 +15,7 @@ export class RouteStopRepository {
   }
 
   async addRouteStops(routeId: number, stops: any[], client?: PoolClient) {
+    const executor = (client ?? db) as PoolClient;
     const values: any[] = [];
     const placeholders: string[] = [];
 
@@ -34,7 +35,7 @@ export class RouteStopRepository {
     RETURNING *
   `;
 
-    const result = await client.query(query, values);
+    const result = await executor.query(query, values);
     return result.rows;
   }
 }

@@ -41,8 +41,9 @@ export class TripRepository extends BaseRepository {
   }
 
   public async findById(id: number, client?: PoolClient) {
+    const executor = (client ?? db) as PoolClient;
     const query = `SELECT * FROM trips WHERE id = $1`;
-    const result = await db.query(query, [id]);
+    const result = await executor.query(query, [id]);
     return result.rows[0] ?? null;
   }
 
@@ -65,7 +66,7 @@ export class TripRepository extends BaseRepository {
     return result.rows ?? [];
   }
 
-  async updateTripRoute(tripId: number, routeId: number, client?: PoolClient) {
+  async updateTripRoute(tripId: number, routeId: number, client: PoolClient) {
     const query = `
     UPDATE trips set route_id = $1 where id = $2
     `;

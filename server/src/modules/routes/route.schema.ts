@@ -20,7 +20,7 @@ export const getRouteSchema = z.object({
 
 export const createFullRouteSchema = z.object({
   query: z.object({
-    tripId: z.coerce.number().int().positive().optional(),
+    trip_id: z.coerce.number().int().positive().optional(),
   }),
 
   body: z.object({
