@@ -1,31 +1,42 @@
 {
+  // Visit https://aka.ms/tsconfig to read more about this file
   "compilerOptions": {
-    // Output + File Layout
-    "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "NodeNext",
+    // File Layout
+    // "rootDir": "./src",
+    // "outDir": "./dist",
 
-    "rootDir": "./src",
-    "outDir": "./dist",
-
-    // Helpful for TSX + native ESM
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-
-    // Types
+    // Environment Settings
+    // See also https://aka.ms/tsconfig/module
+    "moduleResolution": "node",
+    "module": "commonjs",
+    "target": "esnext",
     "types": ["node"],
+    "outDir": "./dist",
+    "rootDir": "./src",
+    // For nodejs:
 
-    // Declarations + sourcemaps
+    // Other Outputs
+    "sourceMap": true,
     "declaration": true,
     "declarationMap": true,
-    "sourceMap": true,
-
-    // DX
     "forceConsistentCasingInFileNames": true,
-    "skipLibCheck": true,
+
+    // Stricter Typechecking Options
+
+    "esModuleInterop": true,
+
+    // Style Options
+    // "noImplicitReturns": true,
+    // "noImplicitOverride": true,
+    // "noUnusedLocals": true,
+    // "noUnusedParameters": true,
+    // "noFallthroughCasesInSwitch": true,
+    // "noPropertyAccessFromIndexSignature": true,
+
+    // Recommended Options
     "importsNotUsedAsValues": "remove",
 
-    // Aliases
+    "skipLibCheck": true,
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],

@@ -1,6 +1,9 @@
 import { Pool, PoolClient, QueryResult, QueryResultRow } from 'pg';
 import { databaseConfig } from '@config/database';
 import { env } from '@/config/env';
+console.log('RAW PASSWORD =', JSON.stringify(process.env.DB_PASSWORD));
+console.log('ZOD PASSWORD =', JSON.stringify(env.DB_PASSWORD));
+console.log('TYPE =', typeof env.DB_PASSWORD);
 
 class Database {
   public pool: Pool;
@@ -10,11 +13,11 @@ class Database {
     this.pool = new Pool(databaseConfig);
 
     this.pool.on('connect', () => {
-      console.log('New database connection established');
+      console.log('📦 New database connection established');
     });
 
     this.pool.on('error', (err) => {
-      console.error('Unexpected database error:', err);
+      console.error('💥 Unexpected database error:', err);
     });
   }
 
@@ -62,7 +65,7 @@ class Database {
 
   async close(): Promise<void> {
     await this.pool.end();
-    console.log('Database pool closed');
+    console.log('📦 Database pool closed');
   }
 }
 
