@@ -2,6 +2,8 @@ import { ServiceResponse } from '@/shared/types';
 import { RouteStopRepository } from './route-stop.repository';
 import { RouteStopDto } from './route-stop.dto';
 import { RouteRepository } from '../routes/route.repository';
+import { redis } from '@/shared/redis/redis';
+import { clearCacheByPattern } from '@/shared/utils/clear-cache-pattern';
 
 export class RouteStopService {
   private routeRepository: RouteRepository;
@@ -28,6 +30,8 @@ export class RouteStopService {
         return ServiceResponse.databaseError('Failed to create route stop');
       }
 
+      await redis.del(`routes:${routeId}`);
+      await clearCacheByPattern('routes:*');
       const routeDto = RouteStopDto.fromEntity(routeStop);
       return ServiceResponse.created(routeDto);
     } catch (error) {

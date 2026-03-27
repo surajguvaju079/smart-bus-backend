@@ -44,4 +44,30 @@ export class RouteRepository {
     const result = await db.query(query, [id]);
     return result.rows;
   }
+
+  async getAllRoutesWithStops(page: number, limit: number) {
+    const offset = (page - 1) * limit;
+
+    console.log('offset is', offset);
+
+    const query = `SELECT
+     r.id as route_id, r.created_at, r.updated_at, r.name as route_name, 
+     rs.id as stop_id, rs.name as stop_name, rs.longitude, rs.latitude, rs.stop_order
+      from routes r left join route_stops rs
+       on r.id = rs.route_id
+       where r.id in (SELECT id from routes order by id asc limit $1 offset $2)
+       order by r.id, rs.stop_order asc 
+    `;
+
+    const result = await db.query(query, [limit, offset]);
+
+    // total count
+    const countRes = await db.query(`SELECT COUNT(*) FROM routes`);
+    const total = Number(countRes.rows[0].count);
+
+    return {
+      routes: result.rows,
+      total,
+    };
+  }
 }

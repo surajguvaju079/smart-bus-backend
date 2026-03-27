@@ -88,3 +88,64 @@ export class RouteWithStopsDTO {
     };
   }
 }
+
+export interface RouteWithStopsRow {
+  route_id: number;
+  route_name: string;
+  created_at: string;
+  updated_at: string;
+
+  stop_id: number | null;
+  stop_name: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  stop_order: number | null;
+}
+
+export interface StopDTO {
+  id: number;
+  name: string;
+  latitude: number;
+  longitude: number;
+  order: number;
+}
+
+export interface RouteWithStops {
+  id: number;
+  name: string;
+  createdAt: Date;
+  updatedAt: Date;
+  stops: StopDTO[];
+}
+
+export class AllRouteWithStopsDTO {
+  static fromRows(rows: RouteWithStopsRow[]): RouteWithStops[] {
+    const map = new Map<number, RouteWithStops>();
+
+    rows.forEach((row) => {
+      // 🧱 Create route if not exists
+      if (!map.has(row.route_id)) {
+        map.set(row.route_id, {
+          id: row.route_id,
+          name: row.route_name,
+          createdAt: new Date(row.created_at),
+          updatedAt: new Date(row.updated_at),
+          stops: [],
+        });
+      }
+
+      // ➕ Add stop if exists
+      if (row.stop_id) {
+        map.get(row.route_id)!.stops.push({
+          id: row.stop_id,
+          name: row.stop_name!,
+          latitude: Number(row.latitude),
+          longitude: Number(row.longitude),
+          order: row.stop_order!,
+        });
+      }
+    });
+
+    return Array.from(map.values());
+  }
+}

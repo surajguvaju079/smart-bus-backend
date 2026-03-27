@@ -72,4 +72,12 @@ export class TripRepository extends BaseRepository {
     `;
     await client.query(query, [routeId, tripId]);
   }
+
+  async getRouteId(id: number) {
+    const query = `
+    SELECT route_id from trips where id = $1
+    `;
+    const result = await db.query(query, [id]);
+    return result.rows[0] ?? null;
+  }
 }

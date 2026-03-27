@@ -22,6 +22,7 @@ export class RouteController implements Controller {
     this.router.post('/', validate(createRouteSchema), this.createRoute);
     this.router.get('/', validate(getAllRoutesSchema), this.getRoutes);
     this.router.get('/:id', validate(getRouteSchema), this.getRoute);
+    this.router.get('/one/:id', validate(getRouteSchema), this.getRouteByRouteId);
     this.router.post('/full', validate(createFullRouteSchema), this.createFullRoute);
   }
 
@@ -48,6 +49,11 @@ export class RouteController implements Controller {
   private getRoute: AsyncHandler = async (req, res) => {
     const id = req.params.id;
     const serviceResponse = await this.routeService.getRoute(Number(id));
+    res.status(serviceResponse.statusCode).json(serviceResponse.toJSON());
+  };
+  private getRouteByRouteId: AsyncHandler = async (req, res) => {
+    const id = req.params.id;
+    const serviceResponse = await this.routeService.getRouteByRouteId(Number(id));
     res.status(serviceResponse.statusCode).json(serviceResponse.toJSON());
   };
 
