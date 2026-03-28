@@ -2,12 +2,16 @@ import { redis } from '@/shared/redis/redis';
 import { db } from '@/shared/database/connection';
 import { getIO } from '@/socket';
 import calculateDistance from '@/shared/utils/calculate-distance';
+import { getNextStop } from '@/shared/utils/get-next-stop';
+import { EtaService } from '@/modules/eta/eta.service';
+
 const STREAM = 'trip-locations';
 const GROUP = 'trip-location-group';
 const CONSUMER = 'worker-1';
 const latestLocations = new Map<number, any>();
-
-/* * This worker listens to the Redis stream for incoming trip location updates.
+const routeCache = new Map<number, any[]>();
+/*
+ * This worker listens to the Redis stream for incoming trip location updates.
  * It processes each message, updates the latest location for each trip, and checks if the trip should be marked as completed.
  * If a trip is within 50 meters of its end location and moving slower than 5 km/h, it updates the trip status to COMPLETED in the database.
  * The worker also emits real-time location updates to connected clients via Socket.IO.
@@ -24,6 +28,7 @@ export const startTripLocationWorker = async () => {
   setInterval(() => {
     const io = getIO();
     for (const [tripId, location] of latestLocations.entries()) {
+      console.log('eta is', location);
       io.to(`trip:${tripId}`).emit('trip:location', location);
     }
 
@@ -52,6 +57,43 @@ export const startTripLocationWorker = async () => {
 
       for (const [id, fields] of messages) {
         const data = JSON.parse(fields[1]);
+        let stops = routeCache.get(data.trip_id);
+        if (!stops) {
+          const routeRes = await db.query(
+            `
+            SELECT rs.id, rs.latitude, rs.longitude, rs.name
+            from trips t
+            JOIN routes r on t.route_id = r.id
+            JOIN route_stops rs on rs.route_id = r.id
+            WHERE t.id = $1
+            ORDER BY rs.stop_order ASC 
+            
+            `,
+            [data.trip_id]
+          );
+          stops = routeRes.rows;
+          routeCache.set(data.trip_id, stops);
+        }
+
+        const nextStop = getNextStop(stops, data);
+        let eta = null;
+        const etaService = new EtaService();
+
+        if (nextStop) {
+          try {
+            const etaResult = await etaService.getEta({
+              tripId: data.tripId,
+              nextStop,
+              location: data,
+            });
+            console.log('eta result is:', etaResult);
+            eta = etaResult?.estimated_time_of_arrival;
+          } catch (error) {
+            console.error('ETA error:', error);
+            throw new Error('Failed to get eta');
+          }
+        }
+
         const trip = await db.query(
           'SELECT end_latitude, end_longitude,status FROM trips WHERE id = $1',
           [data.trip_id]
@@ -87,7 +129,11 @@ export const startTripLocationWorker = async () => {
         console.log('Received trip location message:', data);
 
         messageIds.push(id);
-        latestLocations.set(data.trip_id, data);
+        latestLocations.set(data.trip_id, {
+          ...data,
+          eta,
+          nextStop,
+        });
       }
 
       if (rows.length > 0) {
