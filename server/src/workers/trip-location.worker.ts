@@ -5,6 +5,7 @@ import calculateDistance from '@/shared/utils/calculate-distance';
 import { getNextStop } from '@/shared/utils/get-next-stop';
 import { EtaService } from '@/modules/eta/eta.service';
 import { isNearStop } from '@/shared/utils/is-near-stop';
+import { findInitialIndex } from '@/shared/utils/find-initial-index';
 const etaService = new EtaService();
 const STREAM = 'trip-locations';
 const GROUP = 'trip-location-group';
@@ -14,6 +15,7 @@ const routeCache = new Map<number, any[]>();
 const etaLogThrottle = new Map<number, number>();
 const tripCache = new Map<number, any>();
 const visitedStops = new Map<number, Set<number>>();
+const tripProgress = new Map<number, number>();
 /*
  * This worker listens to the Redis stream for incoming trip location updates.
  * It processes each message, updates the latest location for each trip, and checks if the trip should be marked as completed.
@@ -80,7 +82,13 @@ export const startTripLocationWorker = async () => {
           routeCache.set(data.trip_id, stops);
         }
 
-        const nextStop = getNextStop(stops, data);
+        let currentIndex = tripProgress.get(data.trip_id);
+        if (currentIndex === undefined) {
+          const startIndex = findInitialIndex(stops, data);
+          tripProgress.set(data.trip_id, startIndex);
+          currentIndex = startIndex;
+        }
+        const nextStop = stops[currentIndex];
         let eta = null;
 
         if (nextStop) {
@@ -132,6 +140,7 @@ export const startTripLocationWorker = async () => {
           if (isNearStop(data, stop)) {
             tripVisited.add(stop.id);
             visitedStops.set(data.trip_id, tripVisited);
+            tripProgress.set(data.trip_id, currentIndex + 1);
             console.log(`Trip ${data.trip_id} reached stop ${stop.id}`);
 
             const etaLog = await db.query(
@@ -203,7 +212,8 @@ export const startTripLocationWorker = async () => {
               end_latitude,
               end_longitude
             );
-            if (distanceToEnd < 50 && data.speed < 5) {
+            //  if (distanceToEnd < 50 && data.speed < 5) {   TODO:LATER IN PRODUCTION COMPARE WITH SPEED AS WELL
+            if (distanceToEnd < 50) {
               await db.query('UPDATE trips SET status = $1 WHERE id = $2', [
                 'COMPLETED',
                 data.trip_id,
@@ -214,6 +224,7 @@ export const startTripLocationWorker = async () => {
               routeCache.delete(data.trip_id);
               tripCache.delete(data.trip_id);
               etaLogThrottle.delete(data.trip_id);
+              visitedStops.delete(data.trip_id);
               //latestLocations.delete(data.trip_id);
             }
           }
