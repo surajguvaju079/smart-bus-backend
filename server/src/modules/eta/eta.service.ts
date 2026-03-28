@@ -12,16 +12,18 @@ export class EtaService {
     location: any;
   }) {
     try {
+      console.log('next stop is', nextStop);
+      console.log('location is', location);
       const distance = calculateDistance(
         location.latitude,
-        location.longitue,
-        nextStop.latitude,
-        nextStop.longitude
+        location.longitude,
+        Number(nextStop.latitude),
+        Number(nextStop.longitude)
       );
       if (!distance) {
         throw new Error("distance couldn't be calculated");
       }
-      const speed = location.speed ? location.speed * 3.6 : 10; //fallback
+      const speed = location.speed ? location.speed * 3.6 : 10;
       const now = new Date();
       console.log('hi there eta service hit');
 
@@ -41,7 +43,11 @@ export class EtaService {
       );
       console.log('response', response);
 
-      const eta = response.data;
+      const eta = {
+        ...response.data,
+        speed,
+        distance,
+      };
       return eta;
     } catch (error) {
       console.error('error of get eta is :', error);

@@ -12,7 +12,6 @@ import { startTripLocationWorker } from './workers/trip-location.worker';
   const server = http.createServer(appInstance.app);
   initSocket(server);
 
-  console.log('hi there server is listening');
   startTripLocationWorker();
   server.listen(env.PORT || 8080, '0.0.0.0', () => {
     console.log(`🚀 Server running on port ${env.PORT || 8080}`);

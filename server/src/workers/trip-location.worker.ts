@@ -4,12 +4,14 @@ import { getIO } from '@/socket';
 import calculateDistance from '@/shared/utils/calculate-distance';
 import { getNextStop } from '@/shared/utils/get-next-stop';
 import { EtaService } from '@/modules/eta/eta.service';
-
+const etaService = new EtaService();
 const STREAM = 'trip-locations';
 const GROUP = 'trip-location-group';
 const CONSUMER = 'worker-1';
 const latestLocations = new Map<number, any>();
 const routeCache = new Map<number, any[]>();
+const etaLogThrottle = new Map<number, number>();
+const tripCache = new Map<number, any>();
 /*
  * This worker listens to the Redis stream for incoming trip location updates.
  * It processes each message, updates the latest location for each trip, and checks if the trip should be marked as completed.
@@ -58,6 +60,7 @@ export const startTripLocationWorker = async () => {
       for (const [id, fields] of messages) {
         const data = JSON.parse(fields[1]);
         let stops = routeCache.get(data.trip_id);
+        console.log('stops from cache', stops);
         if (!stops) {
           const routeRes = await db.query(
             `
@@ -77,27 +80,59 @@ export const startTripLocationWorker = async () => {
 
         const nextStop = getNextStop(stops, data);
         let eta = null;
-        const etaService = new EtaService();
 
         if (nextStop) {
           try {
-            const etaResult = await etaService.getEta({
-              tripId: data.tripId,
-              nextStop,
-              location: data,
-            });
-            console.log('eta result is:', etaResult);
-            eta = etaResult?.estimated_time_of_arrival;
+            const lastLogged = etaLogThrottle.get(data.trip_id) || 0;
+            const nowTime = Date.now();
+            if (nowTime - lastLogged >= 10000) {
+              etaLogThrottle.set(data.trip_id, nowTime);
+              const etaResult = await etaService.getEta({
+                tripId: data.trip_id,
+                nextStop,
+                location: data,
+              });
+              eta = etaResult?.estimated_time_of_arrival;
+
+              const now = new Date();
+              await db.query(
+                `
+                INSERT INTO trip_eta_logs (
+                        trip_id,
+                        next_stop_id,
+                        distance_km,
+                        speed_kmh,
+                        predicted_eta_seconds,
+                        hour,
+                        weekday
+                        )
+                VALUES ($1,$2,$3,$4,$5,$6,$7)
+              `,
+                [
+                  data.trip_id,
+                  nextStop.id,
+                  etaResult?.distance,
+                  etaResult?.speed,
+                  etaResult?.estimated_time_of_arrival,
+                  now.getHours(),
+                  now.getDay(),
+                ]
+              );
+            }
           } catch (error) {
             console.error('ETA error:', error);
-            throw new Error('Failed to get eta');
           }
         }
+        let trip = await tripCache.get(data.trip_id);
+        if (!trip) {
+          const tripRows = await db.query(
+            'SELECT end_latitude, end_longitude,status FROM trips WHERE id = $1',
+            [data.trip_id]
+          );
+          trip = tripRows;
+          tripCache.set(data.trip_id, tripRows);
+        }
 
-        const trip = await db.query(
-          'SELECT end_latitude, end_longitude,status FROM trips WHERE id = $1',
-          [data.trip_id]
-        );
         if (trip.rows.length > 0) {
           const { end_latitude, end_longitude, status } = trip.rows[0];
           if (status !== 'COMPLETED') {
@@ -115,6 +150,10 @@ export const startTripLocationWorker = async () => {
               console.log(`Trip ${data.trip_id} marked as COMPLETED`);
               const io = getIO();
               io.to(`trip:${data.trip_id}`).emit('trip:completed', { trip_id: data.trip_id });
+              routeCache.delete(data.trip_id);
+              tripCache.delete(data.trip_id);
+              etaLogThrottle.delete(data.trip_id);
+              //latestLocations.delete(data.trip_id);
             }
           }
         }
