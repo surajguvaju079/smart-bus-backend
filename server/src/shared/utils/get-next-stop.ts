@@ -1,6 +1,7 @@
+import { RouteStopDto } from '@/modules/route-stops/route-stop.dto';
 import calculateDistance from './calculate-distance';
 
-export const getNextStop = (stops: any[], currentLocation: any) => {
+export const getNextStop = (stops: any, currentLocation: any) => {
   let minDist = Infinity;
   let nearest = null;
 
@@ -12,7 +13,7 @@ export const getNextStop = (stops: any[], currentLocation: any) => {
       currentLocation.longitude
     );
 
-    if (d < Infinity) {
+    if (d < minDist) {
       minDist = d;
       nearest = stop;
     }

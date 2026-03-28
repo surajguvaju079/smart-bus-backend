@@ -19,7 +19,6 @@ import { startTripLocationWorker } from './workers/trip-location.worker';
     console.log(`🏥 Health check at ${env.BASE_URL}/health`);
   });
 
-  //Graceful shutdown
   process.on('SIGINT', async () => {
     console.log('🔒 Shutting down server...');
     server.close();

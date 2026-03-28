@@ -41,10 +41,9 @@ export class EtaService {
           },
         }
       );
-      console.log('response', response);
 
       const eta = {
-        ...response.data,
+        estimated_time_of_arrival: Math.ceil(response.data.estimated_time_of_arrival * 3600),
         speed,
         distance,
       };

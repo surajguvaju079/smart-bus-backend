@@ -4,6 +4,7 @@ import { getIO } from '@/socket';
 import calculateDistance from '@/shared/utils/calculate-distance';
 import { getNextStop } from '@/shared/utils/get-next-stop';
 import { EtaService } from '@/modules/eta/eta.service';
+import { isNearStop } from '@/shared/utils/is-near-stop';
 const etaService = new EtaService();
 const STREAM = 'trip-locations';
 const GROUP = 'trip-location-group';
@@ -12,6 +13,7 @@ const latestLocations = new Map<number, any>();
 const routeCache = new Map<number, any[]>();
 const etaLogThrottle = new Map<number, number>();
 const tripCache = new Map<number, any>();
+const visitedStops = new Map<number, Set<number>>();
 /*
  * This worker listens to the Redis stream for incoming trip location updates.
  * It processes each message, updates the latest location for each trip, and checks if the trip should be marked as completed.
@@ -123,6 +125,65 @@ export const startTripLocationWorker = async () => {
             console.error('ETA error:', error);
           }
         }
+
+        const tripVisited = visitedStops.get(data.trip_id) || new Set();
+        for (const stop of stops) {
+          if (tripVisited.has(stop.id)) continue;
+          if (isNearStop(data, stop)) {
+            tripVisited.add(stop.id);
+            visitedStops.set(data.trip_id, tripVisited);
+            console.log(`Trip ${data.trip_id} reached stop ${stop.id}`);
+
+            const etaLog = await db.query(
+              `
+                SELECT predicted_eta_seconds, created_at
+                FROM trip_eta_logs
+                WHERE trip_id = $1 AND next_stop_id = $2
+                ORDER BY created_at DESC
+                LIMIT 1
+              `,
+              [data.trip_id, stop.id]
+            );
+            let predicted = null;
+            let actual = null;
+            let delay = null;
+
+            console.log('etaLoglength', etaLog.rows);
+
+            if (etaLog.rows.length > 0) {
+              predicted = etaLog.rows[0].predicted_eta_seconds;
+              console.log('predicted:', predicted);
+
+              const predictedTime = new Date(etaLog.rows[0].created_at).getTime();
+              console.log('predicted time:', predictedTime);
+              const nowTime = Date.now();
+
+              actual = Math.floor((nowTime - predictedTime) / 1000);
+              delay = actual - predicted;
+            }
+
+            await db.query(
+              `
+                  INSERT INTO trip_stop_progress (
+                    trip_id,
+                    stop_id,
+                    reached_at,
+                    predicted_eta_seconds,
+                    actual_eta_seconds,
+                    delay_seconds
+                  )
+                  VALUES ($1,$2,NOW(),$3,$4,$5)
+              `,
+              [data.trip_id, stop.id, predicted, actual, delay]
+            );
+            const io = getIO();
+            io.to(`trip:${data.trip_id}`).emit('trip:stop-reached', {
+              stopId: stop.id,
+              delay,
+            });
+          }
+        }
+
         let trip = await tripCache.get(data.trip_id);
         if (!trip) {
           const tripRows = await db.query(
