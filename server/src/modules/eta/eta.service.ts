@@ -52,4 +52,42 @@ export class EtaService {
       console.error('error of get eta is :', error);
     }
   }
+
+  getMultiStopETA = async ({ stops, currentIndex, currentLocation }: any) => {
+    const results = [];
+
+    let prevPoint = currentLocation;
+    let totalETA = 0;
+
+    for (let i = currentIndex; i < stops.length; i++) {
+      const stop = stops[i];
+
+      try {
+        const etaResult = await this.getEta({
+          tripId: null,
+          nextStop: stop,
+          location: prevPoint,
+        });
+
+        if (!etaResult) continue;
+
+        totalETA += etaResult.estimated_time_of_arrival;
+
+        results.push({
+          stopId: stop.id,
+          stopName: stop.name,
+          eta: totalETA,
+        });
+
+        prevPoint = {
+          latitude: stop.latitude,
+          longitude: stop.longitude,
+        };
+      } catch (err) {
+        console.error('Multi-stop ETA error:', err);
+      }
+    }
+
+    return results;
+  };
 }

@@ -16,6 +16,7 @@ const etaLogThrottle = new Map<number, number>();
 const tripCache = new Map<number, any>();
 const visitedStops = new Map<number, Set<number>>();
 const tripProgress = new Map<number, number>();
+const multiEtaThrottle = new Map<number, number>();
 /*
  * This worker listens to the Redis stream for incoming trip location updates.
  * It processes each message, updates the latest location for each trip, and checks if the trip should be marked as completed.
@@ -96,44 +97,65 @@ export const startTripLocationWorker = async () => {
         }
         const nextStop = stops[currentIndex];
         let eta = null;
+        let etaList: any[] = [];
 
         if (nextStop) {
           try {
-            const lastLogged = etaLogThrottle.get(data.trip_id) || 0;
             const nowTime = Date.now();
+
+            // 🔥 ETA to next stop (existing)
+            const lastLogged = etaLogThrottle.get(data.trip_id) || 0;
+
             if (nowTime - lastLogged >= 10000) {
               etaLogThrottle.set(data.trip_id, nowTime);
+
               const etaResult = await etaService.getEta({
                 tripId: data.trip_id,
                 nextStop,
                 location: data,
               });
-              eta = etaResult?.estimated_time_of_arrival;
 
-              const now = new Date();
-              await db.query(
-                `
-                INSERT INTO trip_eta_logs (
-                        trip_id,
-                        next_stop_id,
-                        distance_km,
-                        speed_kmh,
-                        predicted_eta_seconds,
-                        hour,
-                        weekday
-                        )
-                VALUES ($1,$2,$3,$4,$5,$6,$7)
-              `,
-                [
-                  data.trip_id,
-                  nextStop.id,
-                  etaResult?.distance,
-                  etaResult?.speed,
-                  etaResult?.estimated_time_of_arrival,
-                  now.getHours(),
-                  now.getDay(),
-                ]
-              );
+              if (etaResult) {
+                eta = etaResult.estimated_time_of_arrival;
+
+                const now = new Date();
+                await db.query(
+                  `
+          INSERT INTO trip_eta_logs (
+            trip_id,
+            next_stop_id,
+            distance_km,
+            speed_kmh,
+            predicted_eta_seconds,
+            hour,
+            weekday
+          )
+          VALUES ($1,$2,$3,$4,$5,$6,$7)
+        `,
+                  [
+                    data.trip_id,
+                    nextStop.id,
+                    etaResult.distance,
+                    etaResult.speed,
+                    etaResult.estimated_time_of_arrival,
+                    now.getHours(),
+                    now.getDay(),
+                  ]
+                );
+              }
+            }
+
+            // 🔥 MULTI-STOP ETA (throttled separately)
+            const lastMulti = multiEtaThrottle.get(data.trip_id) || 0;
+
+            if (nowTime - lastMulti >= 5000) {
+              multiEtaThrottle.set(data.trip_id, nowTime);
+
+              etaList = await etaService.getMultiStopETA({
+                stops,
+                currentIndex,
+                currentLocation: data,
+              });
             }
           } catch (error) {
             console.error('ETA error:', error);
@@ -231,8 +253,8 @@ export const startTripLocationWorker = async () => {
               etaLogThrottle.delete(data.trip_id);
               visitedStops.delete(data.trip_id);
               tripProgress.delete(data.trip_id);
-
-              //latestLocations.delete(data.trip_id);
+              multiEtaThrottle.delete(data.trip_id);
+              latestLocations.delete(data.trip_id);
             }
           }
         }
@@ -251,6 +273,8 @@ export const startTripLocationWorker = async () => {
           ...data,
           eta,
           nextStop,
+          etaToNext: eta,
+          etaList,
         });
       }
 
