@@ -60,11 +60,12 @@ export const startTripLocationWorker = async () => {
     for (const [, messages] of streams as Array<[string, Array<[string, string[]]>]>) {
       const rows: any[] = [];
       const messageIds: string[] = [];
+      console.log('messageIds are', messageIds);
 
       for (const [id, fields] of messages) {
         const data = JSON.parse(fields[1]);
         let stops = routeCache.get(data.trip_id);
-        console.log('stops from cache', stops);
+
         if (!stops) {
           const routeRes = await db.query(
             `
@@ -83,10 +84,15 @@ export const startTripLocationWorker = async () => {
         }
 
         let currentIndex = tripProgress.get(data.trip_id);
+        console.log('currentIndex is', currentIndex);
         if (currentIndex === undefined) {
           const startIndex = findInitialIndex(stops, data);
           tripProgress.set(data.trip_id, startIndex);
           currentIndex = startIndex;
+        }
+        if (!stops || stops.length === 0) {
+          console.warn(`No stops found for trip ${data.trip_id}`);
+          continue;
         }
         const nextStop = stops[currentIndex];
         let eta = null;
@@ -135,13 +141,12 @@ export const startTripLocationWorker = async () => {
         }
 
         const tripVisited = visitedStops.get(data.trip_id) || new Set();
-        for (const stop of stops) {
-          if (tripVisited.has(stop.id)) continue;
-          if (isNearStop(data, stop)) {
-            tripVisited.add(stop.id);
+        if (nextStop && !tripVisited.has(nextStop.id)) {
+          if (isNearStop(data, nextStop)) {
+            tripVisited.add(nextStop.id);
             visitedStops.set(data.trip_id, tripVisited);
             tripProgress.set(data.trip_id, currentIndex + 1);
-            console.log(`Trip ${data.trip_id} reached stop ${stop.id}`);
+            console.log(`Trip ${data.trip_id} reached stop ${nextStop.id}`);
 
             const etaLog = await db.query(
               `
@@ -151,7 +156,7 @@ export const startTripLocationWorker = async () => {
                 ORDER BY created_at DESC
                 LIMIT 1
               `,
-              [data.trip_id, stop.id]
+              [data.trip_id, nextStop.id]
             );
             let predicted = null;
             let actual = null;
@@ -183,11 +188,11 @@ export const startTripLocationWorker = async () => {
                   )
                   VALUES ($1,$2,NOW(),$3,$4,$5)
               `,
-              [data.trip_id, stop.id, predicted, actual, delay]
+              [data.trip_id, nextStop.id, predicted, actual, delay]
             );
             const io = getIO();
             io.to(`trip:${data.trip_id}`).emit('trip:stop-reached', {
-              stopId: stop.id,
+              stopId: nextStop.id,
               delay,
             });
           }
@@ -199,12 +204,12 @@ export const startTripLocationWorker = async () => {
             'SELECT end_latitude, end_longitude,status FROM trips WHERE id = $1',
             [data.trip_id]
           );
-          trip = tripRows;
-          tripCache.set(data.trip_id, tripRows);
+          trip = tripRows.rows[0];
+          tripCache.set(data.trip_id, tripRows.rows[0]);
         }
 
-        if (trip.rows.length > 0) {
-          const { end_latitude, end_longitude, status } = trip.rows[0];
+        if (trip) {
+          const { end_latitude, end_longitude, status } = trip;
           if (status !== 'COMPLETED') {
             const distanceToEnd = calculateDistance(
               data.latitude,
@@ -225,6 +230,8 @@ export const startTripLocationWorker = async () => {
               tripCache.delete(data.trip_id);
               etaLogThrottle.delete(data.trip_id);
               visitedStops.delete(data.trip_id);
+              tripProgress.delete(data.trip_id);
+
               //latestLocations.delete(data.trip_id);
             }
           }
