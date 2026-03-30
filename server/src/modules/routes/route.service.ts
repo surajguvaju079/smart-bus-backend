@@ -59,7 +59,6 @@ export class RouteService {
         });
       }
 
-      // ✅ Correct mapping
       const routeDTOs = AllRouteWithStopsDTO.fromRows(routes);
 
       const totalPages = Math.ceil(total / limit);

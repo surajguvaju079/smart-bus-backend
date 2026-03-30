@@ -2,12 +2,23 @@ import { redis } from '@/shared/redis/redis';
 import { db } from '@/shared/database/connection';
 import { getIO } from '@/socket';
 import calculateDistance from '@/shared/utils/calculate-distance';
+import { getNextStop } from '@/shared/utils/get-next-stop';
+import { EtaService } from '@/modules/eta/eta.service';
+import { isNearStop } from '@/shared/utils/is-near-stop';
+import { findInitialIndex } from '@/shared/utils/find-initial-index';
+const etaService = new EtaService();
 const STREAM = 'trip-locations';
 const GROUP = 'trip-location-group';
 const CONSUMER = 'worker-1';
 const latestLocations = new Map<number, any>();
-
-/* * This worker listens to the Redis stream for incoming trip location updates.
+const routeCache = new Map<number, any[]>();
+const etaLogThrottle = new Map<number, number>();
+const tripCache = new Map<number, any>();
+const visitedStops = new Map<number, Set<number>>();
+const tripProgress = new Map<number, number>();
+const multiEtaThrottle = new Map<number, number>();
+/*
+ * This worker listens to the Redis stream for incoming trip location updates.
  * It processes each message, updates the latest location for each trip, and checks if the trip should be marked as completed.
  * If a trip is within 50 meters of its end location and moving slower than 5 km/h, it updates the trip status to COMPLETED in the database.
  * The worker also emits real-time location updates to connected clients via Socket.IO.
@@ -24,6 +35,7 @@ export const startTripLocationWorker = async () => {
   setInterval(() => {
     const io = getIO();
     for (const [tripId, location] of latestLocations.entries()) {
+      console.log('eta is', location);
       io.to(`trip:${tripId}`).emit('trip:location', location);
     }
 
@@ -49,15 +61,180 @@ export const startTripLocationWorker = async () => {
     for (const [, messages] of streams as Array<[string, Array<[string, string[]]>]>) {
       const rows: any[] = [];
       const messageIds: string[] = [];
+      console.log('messageIds are', messageIds);
 
       for (const [id, fields] of messages) {
         const data = JSON.parse(fields[1]);
-        const trip = await db.query(
-          'SELECT end_latitude, end_longitude,status FROM trips WHERE id = $1',
-          [data.trip_id]
-        );
-        if (trip.rows.length > 0) {
-          const { end_latitude, end_longitude, status } = trip.rows[0];
+        let stops = routeCache.get(data.trip_id);
+        console.log('stops from cache is', stops);
+
+        if (!stops) {
+          const routeRes = await db.query(
+            `
+            SELECT rs.id, rs.latitude, rs.longitude, rs.name
+            from trips t
+            JOIN routes r on t.route_id = r.id
+            JOIN route_stops rs on rs.route_id = r.id
+            WHERE t.id = $1
+            ORDER BY rs.stop_order ASC 
+            
+            `,
+            [data.trip_id]
+          );
+
+          stops = routeRes.rows;
+          console.log('Fetched stops from DB for trip', data.trip_id, stops);
+          routeCache.set(data.trip_id, stops);
+        }
+
+        let currentIndex = tripProgress.get(data.trip_id);
+        console.log('currentIndex is', currentIndex);
+        if (currentIndex === undefined) {
+          const startIndex = findInitialIndex(stops, data);
+          tripProgress.set(data.trip_id, startIndex);
+          currentIndex = startIndex;
+        }
+        if (!stops || stops.length === 0) {
+          console.warn(`No stops found for trip ${data.trip_id}`);
+          continue;
+        }
+        const nextStop = stops[currentIndex];
+        let eta = null;
+        let etaList: any[] = [];
+
+        if (nextStop) {
+          try {
+            const nowTime = Date.now();
+
+            // 🔥 ETA to next stop (existing)
+            const lastLogged = etaLogThrottle.get(data.trip_id) || 0;
+
+            if (nowTime - lastLogged >= 10000) {
+              etaLogThrottle.set(data.trip_id, nowTime);
+
+              const etaResult = await etaService.getEta({
+                tripId: data.trip_id,
+                nextStop,
+                location: data,
+              });
+
+              if (etaResult) {
+                eta = etaResult.estimated_time_of_arrival;
+
+                const now = new Date();
+                await db.query(
+                  `
+          INSERT INTO trip_eta_logs (
+            trip_id,
+            next_stop_id,
+            distance_km,
+            speed_kmh,
+            predicted_eta_seconds,
+            hour,
+            weekday
+          )
+          VALUES ($1,$2,$3,$4,$5,$6,$7)
+        `,
+                  [
+                    data.trip_id,
+                    nextStop.id,
+                    etaResult.distance,
+                    etaResult.speed,
+                    etaResult.estimated_time_of_arrival,
+                    now.getHours(),
+                    now.getDay(),
+                  ]
+                );
+              }
+            }
+
+            // 🔥 MULTI-STOP ETA (throttled separately)
+            const lastMulti = multiEtaThrottle.get(data.trip_id) || 0;
+
+            if (nowTime - lastMulti >= 5000) {
+              multiEtaThrottle.set(data.trip_id, nowTime);
+
+              etaList = await etaService.getMultiStopETA({
+                stops,
+                currentIndex,
+                currentLocation: data,
+              });
+            }
+          } catch (error) {
+            console.error('ETA error:', error);
+          }
+        }
+
+        const tripVisited = visitedStops.get(data.trip_id) || new Set();
+        if (nextStop && !tripVisited.has(nextStop.id)) {
+          if (isNearStop(data, nextStop)) {
+            tripVisited.add(nextStop.id);
+            visitedStops.set(data.trip_id, tripVisited);
+            tripProgress.set(data.trip_id, currentIndex + 1);
+            console.log(`Trip ${data.trip_id} reached stop ${nextStop.id}`);
+
+            const etaLog = await db.query(
+              `
+                SELECT predicted_eta_seconds, created_at
+                FROM trip_eta_logs
+                WHERE trip_id = $1 AND next_stop_id = $2
+                ORDER BY created_at DESC
+                LIMIT 1
+              `,
+              [data.trip_id, nextStop.id]
+            );
+            let predicted = null;
+            let actual = null;
+            let delay = null;
+
+            console.log('etaLoglength', etaLog.rows);
+
+            if (etaLog.rows.length > 0) {
+              predicted = etaLog.rows[0].predicted_eta_seconds;
+              console.log('predicted:', predicted);
+
+              const predictedTime = new Date(etaLog.rows[0].created_at).getTime();
+              console.log('predicted time:', predictedTime);
+              const nowTime = Date.now();
+
+              actual = Math.floor((nowTime - predictedTime) / 1000);
+              delay = actual - predicted;
+            }
+
+            await db.query(
+              `
+                  INSERT INTO trip_stop_progress (
+                    trip_id,
+                    stop_id,
+                    reached_at,
+                    predicted_eta_seconds,
+                    actual_eta_seconds,
+                    delay_seconds
+                  )
+                  VALUES ($1,$2,NOW(),$3,$4,$5)
+              `,
+              [data.trip_id, nextStop.id, predicted, actual, delay]
+            );
+            const io = getIO();
+            io.to(`trip:${data.trip_id}`).emit('trip:stop-reached', {
+              stopId: nextStop.id,
+              delay,
+            });
+          }
+        }
+
+        let trip = await tripCache.get(data.trip_id);
+        if (!trip) {
+          const tripRows = await db.query(
+            'SELECT end_latitude, end_longitude,status FROM trips WHERE id = $1',
+            [data.trip_id]
+          );
+          trip = tripRows.rows[0];
+          tripCache.set(data.trip_id, tripRows.rows[0]);
+        }
+
+        if (trip) {
+          const { end_latitude, end_longitude, status } = trip;
           if (status !== 'COMPLETED') {
             const distanceToEnd = calculateDistance(
               data.latitude,
@@ -65,7 +242,8 @@ export const startTripLocationWorker = async () => {
               end_latitude,
               end_longitude
             );
-            if (distanceToEnd < 50 && data.speed < 5) {
+            //  if (distanceToEnd < 50 && data.speed < 5) {   TODO:LATER IN PRODUCTION COMPARE WITH SPEED AS WELL
+            if (distanceToEnd < 50) {
               await db.query('UPDATE trips SET status = $1 WHERE id = $2', [
                 'COMPLETED',
                 data.trip_id,
@@ -73,6 +251,13 @@ export const startTripLocationWorker = async () => {
               console.log(`Trip ${data.trip_id} marked as COMPLETED`);
               const io = getIO();
               io.to(`trip:${data.trip_id}`).emit('trip:completed', { trip_id: data.trip_id });
+              routeCache.delete(data.trip_id);
+              tripCache.delete(data.trip_id);
+              etaLogThrottle.delete(data.trip_id);
+              visitedStops.delete(data.trip_id);
+              tripProgress.delete(data.trip_id);
+              multiEtaThrottle.delete(data.trip_id);
+              latestLocations.delete(data.trip_id);
             }
           }
         }
@@ -87,7 +272,18 @@ export const startTripLocationWorker = async () => {
         console.log('Received trip location message:', data);
 
         messageIds.push(id);
-        latestLocations.set(data.trip_id, data);
+        latestLocations.set(data.trip_id, {
+          ...data,
+          eta,
+          nextStop: {
+            id: nextStop?.id,
+            name: nextStop?.name,
+            latitude: Number(nextStop?.latitude),
+            longitude: Number(nextStop?.longitude),
+          },
+          etaToNext: eta,
+          etaList,
+        });
       }
 
       if (rows.length > 0) {
