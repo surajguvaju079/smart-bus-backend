@@ -66,6 +66,7 @@ export const startTripLocationWorker = async () => {
       for (const [id, fields] of messages) {
         const data = JSON.parse(fields[1]);
         let stops = routeCache.get(data.trip_id);
+        console.log('stops from cache is', stops);
 
         if (!stops) {
           const routeRes = await db.query(
@@ -80,7 +81,9 @@ export const startTripLocationWorker = async () => {
             `,
             [data.trip_id]
           );
+
           stops = routeRes.rows;
+          console.log('Fetched stops from DB for trip', data.trip_id, stops);
           routeCache.set(data.trip_id, stops);
         }
 
@@ -272,7 +275,12 @@ export const startTripLocationWorker = async () => {
         latestLocations.set(data.trip_id, {
           ...data,
           eta,
-          nextStop,
+          nextStop: {
+            id: nextStop?.id,
+            name: nextStop?.name,
+            latitude: Number(nextStop?.latitude),
+            longitude: Number(nextStop?.longitude),
+          },
           etaToNext: eta,
           etaList,
         });
