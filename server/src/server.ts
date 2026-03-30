@@ -10,9 +10,9 @@ import { startTripLocationWorker } from './workers/trip-location.worker';
   const appInstance = new App();
   await appInstance.init();
   const server = http.createServer(appInstance.app);
-  initSocket(server);
+  await initSocket(server);
 
-  startTripLocationWorker();
+  startTripLocationWorker().catch(console.error);
   server.listen(env.PORT || 8080, '0.0.0.0', () => {
     console.log(`🚀 Server running on port ${env.PORT || 8080}`);
     console.log(`📚 API docs available at ${env.BASE_URL}/api-docs`);

@@ -3,6 +3,8 @@ import { createAdapter } from '@socket.io/redis-adapter';
 import http from 'http';
 import { Server } from 'socket.io';
 import { registerLocationEvents } from './events/location.event';
+const redisPub = redis.duplicate();
+redisPub.on('error', (err) => console.error('❌ Redis error [pub]', err));
 
 let io: Server;
 export const initSocket = async (server: http.Server) => {
@@ -12,7 +14,7 @@ export const initSocket = async (server: http.Server) => {
     },
   });
 
-  io.adapter(createAdapter(redis, redisSub));
+  io.adapter(createAdapter(redisPub, redisSub));
 
   io.on('connection', (socket) => {
     console.log('a user connected:', socket.id);
