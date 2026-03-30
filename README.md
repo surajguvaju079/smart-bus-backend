@@ -156,13 +156,17 @@ npm run build
 npm start
 ```
 
+To access database in the docker
+
+````bash
+docker exec -it local-postgres psql -U postgres
 ---
 
 ## Health Check
 
 ```http
 GET http://localhost:3000/health
-```
+````
 
 ---
 
