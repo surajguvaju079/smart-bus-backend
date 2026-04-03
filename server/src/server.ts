@@ -4,6 +4,7 @@ import { env } from '@config/env';
 import { initSocket } from './socket/index';
 import { db } from '@shared/database/connection';
 import { startTripLocationWorker } from './workers/trip-location.worker';
+import { startEmailWorker } from './workers/email-worker';
 
 (async () => {
   console.log('app instance is listening');
@@ -13,6 +14,7 @@ import { startTripLocationWorker } from './workers/trip-location.worker';
   await initSocket(server);
 
   startTripLocationWorker().catch(console.error);
+  startEmailWorker();
   server.listen(env.PORT || 8080, '0.0.0.0', () => {
     console.log(`🚀 Server running on port ${env.PORT || 8080}`);
     console.log(`📚 API docs available at ${env.BASE_URL}/api-docs`);
