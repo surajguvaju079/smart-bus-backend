@@ -14,6 +14,7 @@ import { TripController } from './modules/trips/trip.controller';
 import { TripLocationController } from './modules/trip-locations/trip-location.controller';
 import { RouteController } from '@/modules/routes/route.controller';
 import { RouteStopController } from './modules/route-stops/route-stop.controller';
+import { requestLogger } from './shared/middleware/logger.middleware';
 
 class App {
   public app: Application;
@@ -45,9 +46,11 @@ class App {
         allowedHeaders: ['Content-Type', 'Authorization'],
       })
     );
+
     this.app.use(compression());
     this.app.use(express.json());
-    this.app.use(express.urlencoded({ extended: true }));
+    //   this.app.use(express.urlencoded({ extended: true }));
+    this.app.use(requestLogger);
 
     // Health check
     this.app.get('/health', (req, res) => {
