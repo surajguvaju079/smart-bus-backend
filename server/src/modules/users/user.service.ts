@@ -3,6 +3,7 @@ import { UserRepository } from './user.repository';
 import { User, CreateUserDTO, UpdateUserDTO } from './user.schema';
 import { ServiceResponse } from '@shared/types';
 import { UserDTO } from './user.dto';
+import { sendWelcomeEmail } from '@/queue/email.jobs';
 
 export class UserService {
   constructor(private userRepository: UserRepository) {}
@@ -27,6 +28,8 @@ export class UserService {
 
       const userDto = UserDTO.fromEntity(user as any);
       console.log('Created userDto:', userDto);
+
+      sendWelcomeEmail({ email: user.email, name: user.name });
 
       return ServiceResponse.created(userDto);
     } catch (error) {
