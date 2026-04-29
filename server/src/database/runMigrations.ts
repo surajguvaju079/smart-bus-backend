@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { Client } from 'pg';
 import { env } from '@/config/env';
+import logger from '@/shared/utils/logger';
 
 export async function runMigrations() {
   const isRenderPostgres = env.DB_HOST?.includes('render.com');
@@ -17,16 +18,16 @@ export async function runMigrations() {
   });
 
   try {
-    console.log('🔌 Connecting to database...');
-    console.log(`  Host: ${env.DB_HOST}`);
-    console.log(`  Database: ${env.DB_NAME}`);
+    logger.info('🔌 Connecting to database...');
+    logger.info(`  Host: ${env.DB_HOST}`);
+    logger.info(`  Database: ${env.DB_NAME}`);
     await client.connect();
-    console.log('✅ Connected to database\n');
+    logger.info('✅ Connected to database\n');
 
     // Debug: Show ALL possible paths
-    console.log('🔍 Debug - Looking for migrations:');
-    console.log('  __dirname:', __dirname);
-    console.log('  process.cwd():', process.cwd());
+    logger.info('🔍 Debug - Looking for migrations:');
+    logger.info('  __dirname:', __dirname);
+    logger.info('  process.cwd():', process.cwd());
 
     const possiblePaths = [
       path.join(__dirname, 'migrations'),
@@ -36,16 +37,16 @@ export async function runMigrations() {
       path.join(process.cwd(), 'database/migrations'),
     ];
 
-    console.log('\n  Checking all possible paths:');
+    logger.info('\n  Checking all possible paths:');
     possiblePaths.forEach((p) => {
       const exists = fs.existsSync(p);
-      console.log(`    ${exists ? '✅' : '❌'} ${p}`);
+      logger.info(`    ${exists ? '✅' : '❌'} ${p}`);
       if (exists) {
         try {
           const files = fs.readdirSync(p);
-          console.log(`       📁 Contents: [${files.join(', ')}]`);
+          logger.info(`       📁 Contents: [${files.join(', ')}]`);
         } catch (e) {
-          console.log(`       ⚠️  Cannot read directory`);
+          logger.error(`       ⚠️  Cannot read directory`);
         }
       }
     });
@@ -53,30 +54,30 @@ export async function runMigrations() {
     // Also check dist directory structure
     const distPath = path.join(process.cwd(), 'dist');
     if (fs.existsSync(distPath)) {
-      console.log('\n  📦 dist/ structure:');
+      logger.info('\n  📦 dist/ structure:');
       try {
         const distContents = fs.readdirSync(distPath);
-        console.log(`    ${distContents.join(', ')}`);
+        logger.info(`    ${distContents.join(', ')}`);
 
         const distDbPath = path.join(distPath, 'database');
         if (fs.existsSync(distDbPath)) {
           const dbContents = fs.readdirSync(distDbPath);
-          console.log(`    database/: ${dbContents.join(', ')}`);
+          logger.info(`    database/: ${dbContents.join(', ')}`);
         }
       } catch (e) {
-        console.log('    Cannot read dist directory');
+        logger.info('    Cannot read dist directory');
       }
     }
 
     const migrationsDir = possiblePaths.find((p) => fs.existsSync(p));
 
     if (!migrationsDir) {
-      console.log('\n⚠️  No migrations directory found in any checked path');
+      logger.info('\n⚠️  No migrations directory found in any checked path');
       await client.end();
       return;
     }
 
-    console.log(`\n📁 Using migrations from: ${migrationsDir}\n`);
+    logger.info(`\n📁 Using migrations from: ${migrationsDir}\n`);
 
     const files = fs
       .readdirSync(migrationsDir)
@@ -84,38 +85,38 @@ export async function runMigrations() {
       .sort();
 
     if (files.length === 0) {
-      console.log('⚠️  No .sql files found in migrations directory');
+      logger.info('⚠️  No .sql files found in migrations directory');
       await client.end();
       return;
     }
 
-    console.log(`📋 Found ${files.length} migration(s): ${files.join(', ')}\n`);
+    logger.info(`📋 Found ${files.length} migration(s): ${files.join(', ')}\n`);
 
     for (const file of files) {
       const filePath = path.join(migrationsDir, file);
       const sql = fs.readFileSync(filePath, 'utf8');
 
-      console.log(`▶ Running: ${file}`);
+      logger.info(`▶ Running: ${file}`);
 
       try {
         await client.query(sql);
-        console.log(`✔ Completed: ${file}\n`);
+        logger.info(`✔ Completed: ${file}\n`);
       } catch (err: any) {
-        console.error(`❌ Failed on ${file}`);
-        console.error(err.message);
+        logger.error(`❌ Failed on ${file}`);
+        logger.error(err.message);
         await client.end();
         throw err;
       }
     }
 
     await client.end();
-    console.log('🎉 All migrations completed successfully\n');
+    logger.info('🎉 All migrations completed successfully\n');
   } catch (error) {
-    console.error('❌ Migration error:', error);
+    logger.error('❌ Migration error:', error);
     try {
       await client.end();
     } catch (e) {
-      // Ignore
+      logger.error('⚠️  Error closing database connection:', e);
     }
     throw error;
   }

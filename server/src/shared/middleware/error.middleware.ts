@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { ServiceError } from '@shared/types/index';
 import { StatusCodes } from 'http-status-codes';
 import { env } from '@config/env';
+import logger from '../utils/logger';
 
 export const errorHandler = (err: Error, req: Request, res: Response, next: NextFunction) => {
   // Handle ServiceError
@@ -17,11 +18,12 @@ export const errorHandler = (err: Error, req: Request, res: Response, next: Next
   }
 
   // Log unexpected errors
-  console.error('💥 Unhandled error:', {
+  logger.error('💥 Unhandled error:', {
     message: err.message,
     stack: err.stack,
     url: req.url,
     method: req.method,
+    reqId: req.reqId,
   });
 
   // Generic error response
@@ -32,6 +34,8 @@ export const errorHandler = (err: Error, req: Request, res: Response, next: Next
       message: env.NODE_ENV === 'production' ? 'An unexpected error occurred' : err.message,
       ...(env.NODE_ENV !== 'production' && { stack: err.stack }),
     },
+
+    reqId: req.reqId,
   });
 };
 

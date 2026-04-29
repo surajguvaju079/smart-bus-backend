@@ -15,6 +15,9 @@ import { TripLocationController } from './modules/trip-locations/trip-location.c
 import { RouteController } from '@/modules/routes/route.controller';
 import { RouteStopController } from './modules/route-stops/route-stop.controller';
 import { requestLogger } from './shared/middleware/logger.middleware';
+import { requestContext } from './shared/middleware/request-context.middleware';
+import { requestTimer } from './shared/middleware/request-timer.middleware';
+import logger from '@/shared/utils/logger';
 
 class App {
   public app: Application;
@@ -49,7 +52,10 @@ class App {
 
     this.app.use(compression());
     this.app.use(express.json());
-    //   this.app.use(express.urlencoded({ extended: true }));
+    this.app.use(express.urlencoded({ extended: true }));
+
+    this.app.use(requestContext);
+    this.app.use(requestTimer);
     this.app.use(requestLogger);
 
     // Health check
@@ -84,7 +90,7 @@ class App {
     if (env.NODE_ENV === 'production') {
       await runMigrations();
     }
-    console.log("it's running");
+    logger.info('app is running');
   }
 }
 export default App;

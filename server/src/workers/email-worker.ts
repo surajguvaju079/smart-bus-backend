@@ -2,6 +2,7 @@ import { Worker } from 'bullmq';
 import { redis } from '@/shared/redis/redis';
 import { sendEmail } from '@/shared/email/email.service';
 import { welcomeTemplate } from '@/shared/services/welcome-template';
+import logger from '@/shared/utils/logger';
 
 export const startEmailWorker = () => {
   console.log('📧 Email worker started');
@@ -17,7 +18,7 @@ export const startEmailWorker = () => {
             subject: 'Welcome to Smart Bus App',
             html,
           });
-          console.log(`Welcome email sent to ${email}`);
+          logger.info(`Welcome email sent to ${email}`);
           break;
       }
     },
@@ -28,10 +29,10 @@ export const startEmailWorker = () => {
   );
 
   worker.on('completed', (job) => {
-    console.log(`Job ${job.id} completed successfully.`);
+    logger.info(`Job ${job.id} completed successfully.`);
   });
 
   worker.on('failed', (job, err) => {
-    console.error(`Job ${job.id} failed with error:`, err);
+    logger.error(`Job ${job.id} failed with error:`, err);
   });
 };
