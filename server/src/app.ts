@@ -18,6 +18,7 @@ import { requestLogger } from './shared/middleware/logger.middleware';
 import { requestContext } from './shared/middleware/request-context.middleware';
 import { requestTimer } from './shared/middleware/request-timer.middleware';
 import logger from '@/shared/utils/logger';
+import { apiLimiter } from './shared/middleware/rate-limit.middleware';
 
 class App {
   public app: Application;
@@ -40,7 +41,9 @@ class App {
   }
 
   private initializeMiddlewares() {
+    this.app.use('api', apiLimiter);
     this.app.use(helmet());
+    this.app.set('trust proxy', 1);
     this.app.use(
       cors({
         origin: 'true',
