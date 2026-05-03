@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express';
+import { Router } from 'express';
 import { UserService } from './user.service';
 import { UserRepository } from './user.repository';
 import { validate } from '@shared/middleware/validation.middleware';
@@ -9,8 +9,7 @@ import {
   listUsersSchema,
 } from './user.schema.js';
 import { Controller, AsyncHandler } from '@shared/types/index';
-import { Authenticate, AuthorizeRoles } from '@/shared/middleware/auth.middleware';
-import { ROLES } from '@/shared/constants/constant';
+import { handleServiceResponse } from '@/shared/utils/http-handlers';
 
 export class UserController implements Controller {
   public path = '/users';
@@ -52,29 +51,28 @@ export class UserController implements Controller {
   }
 
   private createUser: AsyncHandler = async (req, res) => {
-    const response = await this.userService.createUser(req.body);
-    console.log('Create User Response:', response);
-    res.status(response.statusCode).json(response.toJSON());
+    const serviceResponse = await this.userService.createUser(req.body);
+    handleServiceResponse(serviceResponse, res);
   };
 
   private getUsers: AsyncHandler = async (req, res) => {
     const { page, limit } = req.query as any;
-    const response = await this.userService.getUsers(page, limit);
-    res.status(response.statusCode).json(response.toJSON());
+    const serviceResponse = await this.userService.getUsers(page, limit);
+    handleServiceResponse(serviceResponse, res);
   };
 
   private getUserById: AsyncHandler = async (req, res) => {
-    const response = await this.userService.getUserById(Number(req.params.id));
-    res.status(response.statusCode).json(response.toJSON());
+    const serviceResponse = await this.userService.getUserById(Number(req.params.id));
+    handleServiceResponse(serviceResponse, res);
   };
 
   private updateUser: AsyncHandler = async (req, res) => {
-    const response = await this.userService.updateUser(Number(req.params.id), req.body);
-    res.status(response.statusCode).json(response.toJSON());
+    const serviceResponse = await this.userService.updateUser(Number(req.params.id), req.body);
+    handleServiceResponse(serviceResponse, res);
   };
 
   private deleteUser: AsyncHandler = async (req, res) => {
-    const response = await this.userService.deleteUser(Number(req.params.id));
-    res.status(response.statusCode).json(response.toJSON());
+    const serviceResponse = await this.userService.deleteUser(Number(req.params.id));
+    handleServiceResponse(serviceResponse, res);
   };
 }

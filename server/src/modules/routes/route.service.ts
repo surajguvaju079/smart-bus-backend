@@ -14,6 +14,13 @@ export class RouteService {
     this.tripRepository = new TripRepository();
   }
 
+  /**
+   * Creates a route with the provided name and maps the persisted route entity
+   * to a RouteDTO.
+   *
+   * @param name The route name to create
+   * @returns A service response containing the created route DTO or an error message
+   */
   async createRoute(name: string): Promise<ServiceResponse<RouteDTO>> {
     try {
       const cleanName = name.trim();
@@ -33,6 +40,14 @@ export class RouteService {
     }
   }
 
+  /**
+   * Fetches routes with stops using pagination. Results are cached by page and
+   * limit, then mapped into route DTOs with pagination metadata.
+   *
+   * @param currentPage The current page number
+   * @param limit The maximum number of routes to return per page
+   * @returns A service response containing routes with metadata or an error message
+   */
   async getAllRoutes(currentPage: number = 1, limit: number = 10): Promise<ServiceResponse<any>> {
     const cacheKey = `routes:page:${currentPage}:limit:${limit}`;
     try {
@@ -93,6 +108,14 @@ export class RouteService {
     }
   }
 
+  /**
+   * Fetches the route assigned to a trip. The method first resolves the route ID
+   * from the trip, retrieves the route with stops, caches the result, and maps it
+   * to a RouteWithStopsDTO.
+   *
+   * @param id The trip ID used to resolve the route
+   * @returns A service response containing the route with stops or an error message
+   */
   async getRoute(id: number): Promise<ServiceResponse<RouteWithStopsDTO>> {
     const cacheKey = `trip-route:${id}`;
     try {
@@ -127,6 +150,14 @@ export class RouteService {
       return ServiceResponse.internalError('An unexpected error occured');
     }
   }
+
+  /**
+   * Fetches a route directly by route ID, including all configured stops. The
+   * response is cached and mapped to a RouteWithStopsDTO.
+   *
+   * @param id The route ID to fetch
+   * @returns A service response containing the route with stops or an error message
+   */
   async getRouteByRouteId(id: number): Promise<ServiceResponse<RouteWithStopsDTO>> {
     const cachedKey = `route:${id}`;
     try {
@@ -156,6 +187,16 @@ export class RouteService {
     }
   }
 
+  /**
+   * Creates a route and its stops inside a database transaction. It rejects
+   * duplicate stop orders and can optionally link the new route to an existing
+   * trip before committing the transaction.
+   *
+   * @param name The route name to create
+   * @param stops The ordered route stops to create
+   * @param tripId Optional trip ID to link to the new route
+   * @returns A service response containing the new route ID and link status or an error message
+   */
   async createFullRoute(
     name: string,
     stops: any[],

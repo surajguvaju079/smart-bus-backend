@@ -1,10 +1,11 @@
-import { Router, Request, Response } from 'express';
+import { Router } from 'express';
 import { AuthService } from './auth.service';
 import { AsyncHandler, Controller } from '@/shared/types';
 import { AuthRepository } from './auth.repository';
 import { loginUserSchema } from './auth.schema';
 import { validate } from '@/shared/middleware/validation.middleware';
 import { DriverRepository } from '../drivers/driver.repository';
+import { handleServiceResponse } from '@/shared/utils/http-handlers';
 
 export class AuthController implements Controller {
   public path = '/auth';
@@ -23,8 +24,8 @@ export class AuthController implements Controller {
   private loginUser: AsyncHandler = async (req, res) => {
     const { email, password } = req.body;
 
-    const response = await this.authService.loginUser({ email, password });
+    const serviceResponse = await this.authService.loginUser({ email, password });
 
-    res.status(response.statusCode).json(response.toJSON());
+    handleServiceResponse(serviceResponse, res);
   };
 }

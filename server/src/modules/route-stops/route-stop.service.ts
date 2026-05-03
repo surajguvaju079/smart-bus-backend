@@ -11,6 +11,17 @@ export class RouteStopService {
     this.routeRepository = new RouteRepository();
   }
 
+  /**
+   * Creates a single route stop for a route, clears affected route caches, and
+   * maps the created stop entity to a RouteStopDto.
+   *
+   * @param routeId The ID of the route that owns the stop
+   * @param latitude The stop latitude
+   * @param longitude The stop longitude
+   * @param stopOrder The order of the stop within the route
+   * @param name The display name of the stop
+   * @returns A service response containing the created route stop DTO or an error message
+   */
   async createRouteStop(
     routeId: number,
     latitude: number,
@@ -41,6 +52,15 @@ export class RouteStopService {
       );
     }
   }
+
+  /**
+   * Adds multiple stops to an existing route after verifying the route exists
+   * and that the submitted stop orders are unique.
+   *
+   * @param routeId The ID of the route that owns the stops
+   * @param stops The stops to insert for the route
+   * @returns A service response containing the inserted stops or an error message
+   */
   async addRouteStops(routeId: number, stops: any[]): Promise<ServiceResponse<any>> {
     try {
       const route = await this.routeRepository.getRouteById(routeId);

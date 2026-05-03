@@ -4,6 +4,7 @@ import { TripLocationService } from './trip-location.service';
 import { Router } from 'express';
 import { validate } from '@/shared/middleware/validation.middleware';
 import { TripLocationSchema } from './trip-location.schema';
+import { handleServiceResponse } from '@/shared/utils/http-handlers';
 
 export class TripLocationController implements Controller {
   public path = '/trip-locations';
@@ -20,7 +21,7 @@ export class TripLocationController implements Controller {
   }
 
   private createTripLocation: AsyncHandler = async (req, res) => {
-    const response = await this.tripLocationService.create(req.body);
-    res.status(response.statusCode).json(response.toJSON());
+    const serviceResponse = await this.tripLocationService.create(req.body);
+    handleServiceResponse(serviceResponse, res);
   };
 }

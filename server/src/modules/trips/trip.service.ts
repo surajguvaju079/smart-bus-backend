@@ -9,6 +9,13 @@ export class TripService {
     this.driverRepository = new DriverRepository();
   }
 
+  /**
+   * Creates a trip after validating that the driver exists and that the vehicle
+   * does not already have an ongoing trip.
+   *
+   * @param data The trip creation payload
+   * @returns A service response containing the created trip or an error message
+   */
   async create(data: any) {
     try {
       console.log('Creating trip with data:', data);
@@ -29,6 +36,14 @@ export class TripService {
       return ServiceResponse.internalError('Failed to create trip');
     }
   }
+
+  /**
+   * Fetches trips with pagination and maps each trip entity to a TripDTO.
+   *
+   * @param page The current page number
+   * @param limit The maximum number of trips to return per page
+   * @returns A service response containing trip DTOs or an error message
+   */
   async getTrips(page: number, limit: number) {
     try {
       const trips = await this.tripRepository.getAllTrips(page, limit);
@@ -44,6 +59,16 @@ export class TripService {
       return ServiceResponse.internalError('Failed to fetch trips');
     }
   }
+
+  /**
+   * Fetches trips assigned to a specific driver with pagination and maps each
+   * trip entity to a TripDTO.
+   *
+   * @param driverId The ID of the driver whose trips should be fetched
+   * @param page The current page number
+   * @param limit The maximum number of trips to return per page
+   * @returns A service response containing trip DTOs or an error message
+   */
   async getTripsByDriverId(driverId: number, page: number, limit: number) {
     try {
       console.log(`Fetching trips for driver ID: ${driverId}, page: ${page}, limit: ${limit}`);

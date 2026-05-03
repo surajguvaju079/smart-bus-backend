@@ -12,6 +12,14 @@ export class DriverService {
   private userRepository = new UserRepository();
   constructor(private driverRepository: DriverRepository) {}
 
+  /**
+   * Creates a driver and linked user inside a database transaction. The method
+   * checks for duplicate user emails, creates the user with a hashed password,
+   * updates the user role to DRIVER, and then creates the driver profile.
+   *
+   * @param data The driver creation payload including user and vehicle details
+   * @returns A service response containing the created driver's public user data or an error message
+   */
   async create(data: CreateDriverType): Promise<ServiceResponse> {
     try {
       return await db.transaction(async (trx) => {
@@ -65,6 +73,12 @@ export class DriverService {
     }
   }
 
+  /**
+   * Fetches all drivers from the repository and maps each driver entity to a
+   * DriverDto before returning the response.
+   *
+   * @returns A service response containing driver DTOs or an error message
+   */
   async get(): Promise<ServiceResponse> {
     try {
       const drivers = await this.driverRepository.getAll();

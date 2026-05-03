@@ -8,6 +8,14 @@ import { sendWelcomeEmail } from '@/queue/email.jobs';
 export class UserService {
   constructor(private userRepository: UserRepository) {}
 
+  /**
+   * Creates a new user after checking that the email is not already registered.
+   * The password is hashed before persistence, the persisted entity is mapped to
+   * a UserDTO, and a welcome email job is queued after successful creation.
+   *
+   * @param data The user payload containing email, name, and password
+   * @returns A service response containing the created user DTO or an error message
+   */
   async createUser(data: CreateUserDTO): Promise<ServiceResponse> {
     try {
       const existingUser = await this.userRepository.findByEmail(data.email);
@@ -39,6 +47,13 @@ export class UserService {
     }
   }
 
+  /**
+   * Fetches a user by ID. If the user does not exist, it returns a not found
+   * response; otherwise it maps the user entity to a UserDTO.
+   *
+   * @param id The ID of the user to fetch
+   * @returns A service response containing the user DTO or an error message
+   */
   async getUserById(id: number): Promise<ServiceResponse> {
     const user = await this.userRepository.findById(id);
     if (!user) {
@@ -49,6 +64,15 @@ export class UserService {
     return ServiceResponse.ok(userDto);
   }
 
+  /**
+   * Fetches users with pagination metadata. The method calculates the offset,
+   * retrieves users from the repository, maps each entity to a UserDTO, and
+   * returns the list with page, limit, total, and totalPages metadata.
+   *
+   * @param page The current page number
+   * @param limit The maximum number of users to return per page
+   * @returns A service response containing users and pagination metadata or an error message
+   */
   async getUsers(page: number, limit: number): Promise<ServiceResponse> {
     try {
       const offset = (page - 1) * limit;
@@ -77,6 +101,14 @@ export class UserService {
     }
   }
 
+  /**
+   * Updates a user by ID after verifying that the user exists. If the email is
+   * being changed, it also checks that the new email is not used by another user.
+   *
+   * @param id The ID of the user to update
+   * @param data The partial user payload to update
+   * @returns A service response containing the updated user DTO or an error message
+   */
   async updateUser(id: number, data: Partial<UpdateUserDTO>): Promise<ServiceResponse> {
     try {
       const userExists = await this.userRepository.findById(id);
@@ -110,6 +142,12 @@ export class UserService {
     }
   }
 
+  /**
+   * Deletes a user by ID through the repository delete operation.
+   *
+   * @param id The ID of the user to delete
+   * @returns A service response indicating deletion success or an error message
+   */
   async deleteUser(id: number): Promise<ServiceResponse<null>> {
     return await this.userRepository.delete(id);
   }

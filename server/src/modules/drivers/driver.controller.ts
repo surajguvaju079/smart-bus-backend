@@ -3,8 +3,8 @@ import { Router } from 'express';
 import { DriverService } from './driver.service';
 import { DriverRepository } from './driver.repository';
 import { validate } from '@/shared/middleware/validation.middleware';
-import { userLoginSchema } from '../auth/auth.schema';
 import { createDriverSchema } from './driver.schema';
+import { handleServiceResponse } from '@/shared/utils/http-handlers';
 
 export class DriverController implements Controller {
   public path = '/drivers';
@@ -22,12 +22,12 @@ export class DriverController implements Controller {
   }
 
   private createDriver: AsyncHandler = async (req, res) => {
-    const response = await this.driverService.create(req.body);
-    res.status(response.statusCode).json(response.toJSON());
+    const serviceResponse = await this.driverService.create(req.body);
+    handleServiceResponse(serviceResponse, res);
   };
 
   private getDrivers: AsyncHandler = async (req, res) => {
-    const response = await this.driverService.get();
-    res.status(response.statusCode).json(response.toJSON());
+    const serviceResponse = await this.driverService.get();
+    handleServiceResponse(serviceResponse, res);
   };
 }

@@ -9,6 +9,7 @@ import {
   getAllRoutesSchema,
   getRouteSchema,
 } from './route.schema';
+import { handleServiceResponse } from '@/shared/utils/http-handlers';
 export class RouteController implements Controller {
   public path = '/routes';
   public routeService: RouteService;
@@ -29,32 +30,25 @@ export class RouteController implements Controller {
   private createRoute: AsyncHandler = async (req, res) => {
     const name = req.body.name;
     const serviceResponse = await this.routeService.createRoute(String(name));
-    res.status(serviceResponse.statusCode).json(serviceResponse.toJSON());
+    handleServiceResponse(serviceResponse, res);
   };
   private getRoutes: AsyncHandler = async (req, res) => {
-    let page = Number(req.query.page);
-    if (typeof page !== 'string') {
-      page = 1;
-    }
-
-    let limit = Number(req.query.limit) ?? 10;
-    if (typeof limit !== 'string') {
-      limit = 10;
-    }
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
 
     const serviceResponse = await this.routeService.getAllRoutes(page, limit);
-    res.status(serviceResponse.statusCode).json(serviceResponse.toJSON());
+    handleServiceResponse(serviceResponse, res);
   };
 
   private getRoute: AsyncHandler = async (req, res) => {
     const id = req.params.id;
     const serviceResponse = await this.routeService.getRoute(Number(id));
-    res.status(serviceResponse.statusCode).json(serviceResponse.toJSON());
+    handleServiceResponse(serviceResponse, res);
   };
   private getRouteByRouteId: AsyncHandler = async (req, res) => {
     const id = req.params.id;
     const serviceResponse = await this.routeService.getRouteByRouteId(Number(id));
-    res.status(serviceResponse.statusCode).json(serviceResponse.toJSON());
+    handleServiceResponse(serviceResponse, res);
   };
 
   private createFullRoute: AsyncHandler = async (req, res) => {
@@ -65,6 +59,6 @@ export class RouteController implements Controller {
 
     const serviceResponse = await this.routeService.createFullRoute(String(name), stops, id);
 
-    res.status(serviceResponse.statusCode).json(serviceResponse.toJSON());
+    handleServiceResponse(serviceResponse, res);
   };
 }

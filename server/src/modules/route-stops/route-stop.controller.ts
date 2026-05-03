@@ -4,7 +4,7 @@ import { RouteStopRepository } from './route-stop.repository';
 import { AsyncHandler } from '@/shared/types';
 import { validate } from '@/shared/middleware/validation.middleware';
 import { addRouteStopsSchema, createRouteStopSchema } from './route-stop.schema';
-import { sourceMapsEnabled } from 'process';
+import { handleServiceResponse } from '@/shared/utils/http-handlers';
 export class RouteStopController {
   public path = '/route-stops';
   public router = Router();
@@ -22,14 +22,14 @@ export class RouteStopController {
     const { latitude, longitude, stopOrder, name } = req.body;
     console.log(latitude, longitude, stopOrder, name);
     const routeId = req.params.routeId;
-    const response = await this.routeStopService.createRouteStop(
+    const serviceResponse = await this.routeStopService.createRouteStop(
       Number(routeId),
       Number(latitude),
       Number(longitude),
       Number(stopOrder),
       String(name)
     );
-    res.status(response.statusCode).json(response.toJSON());
+    handleServiceResponse(serviceResponse, res);
   };
 
   private addRouteStops: AsyncHandler = async (req, res) => {
@@ -38,6 +38,6 @@ export class RouteStopController {
 
     const serviceResponse = await this.routeStopService.addRouteStops(id, stops);
 
-    res.status(serviceResponse.statusCode).json(serviceResponse.toJSON());
+    handleServiceResponse(serviceResponse, res);
   };
 }
