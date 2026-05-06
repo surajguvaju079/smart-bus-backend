@@ -12,6 +12,15 @@ export class AuthService {
     private authRepository: AuthRepository,
     private driverRepository: DriverRepository
   ) {}
+
+  /**
+   * Authenticates a user with email and password. It verifies the credentials,
+   * generates access and refresh tokens, maps the user to an Auth/User DTO, and
+   * includes driver metadata when the authenticated user has the DRIVER role.
+   *
+   * @param data The login payload containing email and password
+   * @returns A service response containing the authenticated user and tokens or an error message
+   */
   async loginUser(data: { email: string; password: string }): Promise<ServiceResponse> {
     const user = await this.authRepository.findByEmail(data.email);
     console.log('Fetched user:', user);

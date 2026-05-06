@@ -5,37 +5,37 @@ import compression from 'compression';
 import swaggerUi from 'swagger-ui-express';
 import { env } from '@config/env';
 import { errorHandler, notFoundHandler } from '@shared/middleware/error.middleware';
-import { UserController } from '@modules/users/user.controller';
 import { openApiSpec } from './docs/swagger';
-import { AuthController } from './modules/auth/auth.controller';
 import { runMigrations } from './database/runMigrations';
-import { DriverController } from './modules/drivers/driver.controller';
-import { TripController } from './modules/trips/trip.controller';
-import { TripLocationController } from './modules/trip-locations/trip-location.controller';
-import { RouteController } from '@/modules/routes/route.controller';
-import { RouteStopController } from './modules/route-stops/route-stop.controller';
 import { requestLogger } from './shared/middleware/logger.middleware';
 import { requestContext } from './shared/middleware/request-context.middleware';
 import { requestTimer } from './shared/middleware/request-timer.middleware';
 import logger from '@/shared/utils/logger';
 import { apiLimiter } from './shared/middleware/rate-limit.middleware';
+import { AuthRoute } from './modules/auth/auth.route';
+import { UserRoute } from '@modules/users/user.route';
+import { DriverRoute } from './modules/drivers/driver.route';
+import { TripRoute } from './modules/trips/trip.route';
+import { TripLocationRoute } from './modules/trip-locations/trip-location.route';
+import { RouteRoute } from '@/modules/routes/route.route';
+import { RouteStopRoute } from './modules/route-stops/route-stop.route';
 
 class App {
   public app: Application;
-  private controllers = [
-    new UserController(),
-    new AuthController(),
-    new DriverController(),
-    new TripController(),
-    new TripLocationController(),
-    new RouteController(),
-    new RouteStopController(),
+  private routes = [
+    new UserRoute(),
+    new AuthRoute(),
+    new DriverRoute(),
+    new TripRoute(),
+    new TripLocationRoute(),
+    new RouteRoute(),
+    new RouteStopRoute(),
   ];
 
   constructor() {
     this.app = express();
     this.initializeMiddlewares();
-    this.initializeControllers();
+    this.initializeRoutes();
     this.initializeSwagger();
     this.initializeErrorHandling();
   }
@@ -67,9 +67,9 @@ class App {
     });
   }
 
-  private initializeControllers() {
-    this.controllers.forEach((controller) => {
-      this.app.use(`${env.API_PREFIX}${controller.path}`, controller.router);
+  private initializeRoutes() {
+    this.routes.forEach((route) => {
+      this.app.use(`${env.API_PREFIX}${route.path}`, route.router);
     });
   }
 
