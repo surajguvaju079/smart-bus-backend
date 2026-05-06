@@ -12,6 +12,7 @@
     "target": "esnext",
     "types": ["node"],
     "outDir": "./dist",
+    "baseUrl": "./",
     "rootDir": "./src",
     // For nodejs:
 
@@ -37,7 +38,7 @@
     "importsNotUsedAsValues": "remove",
 
     "skipLibCheck": true,
-    "baseUrl": ".",
+
     "paths": {
       "@/*": ["src/*"],
       "@config/*": ["src/config/*"],

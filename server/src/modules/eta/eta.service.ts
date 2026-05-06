@@ -2,6 +2,15 @@ import calculateDistance from '@/shared/utils/calculate-distance';
 import axios from 'axios';
 
 export class EtaService {
+  /**
+   * Calculates distance to the next stop and requests an ETA prediction from the
+   * external ETA service using the current speed, hour, weekday, and distance.
+   *
+   * @param tripId The trip ID associated with the ETA request
+   * @param nextStop The upcoming stop coordinates and metadata
+   * @param location The current vehicle location and optional speed
+   * @returns ETA details with estimated arrival time, speed, and distance
+   */
   public async getEta({
     tripId,
     nextStop,
@@ -53,6 +62,15 @@ export class EtaService {
     }
   }
 
+  /**
+   * Calculates cumulative ETA values for each upcoming stop starting from the
+   * current stop index and current vehicle location.
+   *
+   * @param stops The ordered stops for the route
+   * @param currentIndex The stop index to begin ETA calculation from
+   * @param currentLocation The current vehicle location
+   * @returns A list of stop IDs, stop names, and cumulative ETA values
+   */
   getMultiStopETA = async ({ stops, currentIndex, currentLocation }: any) => {
     const results = [];
 

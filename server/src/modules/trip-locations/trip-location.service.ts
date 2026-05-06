@@ -11,6 +11,14 @@ export class TripLocationService {
   //private tripLocationPublisher = new TripLocationPublisher();
   constructor(private tripLocationRepository: TripLocationRepository) {}
 
+  /**
+   * Publishes a trip location update after checking that the referenced trip
+   * exists. The current flow publishes the payload and returns a confirmation
+   * message instead of returning a persisted location entity.
+   *
+   * @param data The trip location payload containing trip ID and coordinates
+   * @returns A service response containing a publish confirmation or an error message
+   */
   async create(data: TripLocationType): Promise<ServiceResponse> {
     try {
       const tripExists = await this.tripRepository.findById(data.trip_id);

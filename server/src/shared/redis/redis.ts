@@ -1,4 +1,5 @@
 import Redis from 'ioredis';
+import logger from '../utils/logger';
 
 const BASE_OPTIONS = {
   maxRetriesPerRequest: null,
@@ -26,10 +27,10 @@ const getRedisConfig = (): Redis => {
 };
 
 const attachListeners = (client: Redis, name: string) => {
-  client.on('connect', () => console.log(`✅ Redis connected [${name}]`));
-  client.on('error', (err) => console.error(`❌ Redis error [${name}]`, err));
-  client.on('close', () => console.warn(`⚠️ Redis connection closed [${name}]`));
-  client.on('reconnecting', () => console.log(`🔄 Redis reconnecting [${name}]`));
+  client.on('connect', () => logger.info(`✅ Redis connected [${name}]`));
+  client.on('error', (err) => logger.error(`❌ Redis error [${name}]`, err));
+  client.on('close', () => logger.warn(`⚠️ Redis connection closed [${name}]`));
+  client.on('reconnecting', () => logger.info(`🔄 Redis reconnecting [${name}]`));
 };
 
 export const redis = getRedisConfig();

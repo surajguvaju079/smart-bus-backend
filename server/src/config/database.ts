@@ -1,15 +1,16 @@
 // src/config/database.ts
 import { PoolConfig } from 'pg';
 import { env } from './env';
+import logger from '@/shared/utils/logger';
 
 const isRenderPostgres = env.DB_HOST?.includes('render.com');
 const requireSSL = env.NODE_ENV === 'production' || isRenderPostgres;
 
-console.log('🔧 Building database config...');
-console.log('  Environment:', env.NODE_ENV);
-console.log('  DB_HOST:', env.DB_HOST);
-console.log('  Render Postgres:', isRenderPostgres);
-console.log('  SSL Required:', requireSSL);
+logger.info('  Building database config...');
+logger.info('  Environment:', env.NODE_ENV);
+logger.info('  DB_HOST:', env.DB_HOST);
+logger.info('  Render Postgres:', isRenderPostgres);
+logger.info('  SSL Required:', requireSSL);
 
 export const databaseConfig: PoolConfig = {
   host: env.DB_HOST,
@@ -30,4 +31,4 @@ export const databaseConfig: PoolConfig = {
     : false,
 };
 
-console.log('  Final SSL config:', databaseConfig.ssl);
+logger.info('  Final SSL config:', databaseConfig.ssl);

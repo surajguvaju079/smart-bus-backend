@@ -1,4 +1,11 @@
 import { OpenApiBuilder, OpenAPIObject } from 'openapi3-ts/oas31';
+import { authRouteDocs } from '@/modules/auth/auth.route';
+import { driverRouteDocs } from '@/modules/drivers/driver.route';
+import { routeStopRouteDocs } from '@/modules/route-stops/route-stop.route';
+import { routeRouteDocs } from '@/modules/routes/route.route';
+import { tripLocationRouteDocs } from '@/modules/trip-locations/trip-location.route';
+import { tripRouteDocs } from '@/modules/trips/trip.route';
+import { userRouteDocs } from '@/modules/users/user.route';
 
 export const openApiSpec: OpenAPIObject = OpenApiBuilder.create({
   openapi: '3.1.0',
@@ -1208,7 +1215,9 @@ export const openApiSpec: OpenAPIObject = OpenApiBuilder.create({
 
   .addPath('/routes/{id}', {
     get: {
-      summary: 'Get route by ID with stops',
+      summary: 'Get trip route with stops',
+      description:
+        'Fetches the route assigned to a trip by resolving the route ID from the trip ID.',
       tags: ['Routes'],
       parameters: [
         {
@@ -1216,6 +1225,50 @@ export const openApiSpec: OpenAPIObject = OpenApiBuilder.create({
           in: 'path',
           required: true,
           schema: { type: 'integer', minimum: 0 },
+          description: 'Trip ID',
+        },
+      ],
+      responses: {
+        '200': {
+          description: 'Route found',
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/RouteWithStopsResponse' },
+            },
+          },
+        },
+        '404': {
+          description: 'Route not found',
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/ErrorResponse' },
+            },
+          },
+        },
+        '500': {
+          description: 'Internal server error',
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/ErrorResponse' },
+            },
+          },
+        },
+      },
+    },
+  })
+
+  .addPath('/routes/one/{id}', {
+    get: {
+      summary: 'Get route by route ID with stops',
+      description: 'Fetches a route directly by route ID and includes its configured stops.',
+      tags: ['Routes'],
+      parameters: [
+        {
+          name: 'id',
+          in: 'path',
+          required: true,
+          schema: { type: 'integer', minimum: 0 },
+          description: 'Route ID',
         },
       ],
       responses: {
@@ -1413,3 +1466,17 @@ export const openApiSpec: OpenAPIObject = OpenApiBuilder.create({
   })
 
   .getSpec();
+
+const moduleRouteDocs = [
+  ...authRouteDocs,
+  ...userRouteDocs,
+  ...driverRouteDocs,
+  ...tripRouteDocs,
+  ...tripLocationRouteDocs,
+  ...routeRouteDocs,
+  ...routeStopRouteDocs,
+] as const;
+
+for (const [path, pathItem] of moduleRouteDocs) {
+  openApiSpec.paths[path] = pathItem as any;
+}

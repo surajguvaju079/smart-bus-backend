@@ -6,6 +6,7 @@ import { getNextStop } from '@/shared/utils/get-next-stop';
 import { EtaService } from '@/modules/eta/eta.service';
 import { isNearStop } from '@/shared/utils/is-near-stop';
 import { findInitialIndex } from '@/shared/utils/find-initial-index';
+import logger from '@/shared/utils/logger';
 const etaService = new EtaService();
 const STREAM = 'trip-locations';
 const GROUP = 'trip-location-group';
@@ -30,12 +31,12 @@ export const startTripLocationWorker = async () => {
     await redis.xgroup('CREATE', STREAM, GROUP, '0', 'MKSTREAM');
   } catch (_) {}
 
-  console.log('Trip location worker started');
+  logger.info('Trip location worker started');
 
   setInterval(() => {
     const io = getIO();
     for (const [tripId, location] of latestLocations.entries()) {
-      console.log('eta is', location);
+      logger.info('eta is', location);
       io.to(`trip:${tripId}`).emit('trip:location', location);
     }
 
@@ -55,18 +56,18 @@ export const startTripLocationWorker = async () => {
       STREAM,
       '>'
     )) as unknown as Array<[string, Array<[string, string[]]>]> | null;
-    console.log('Read from stream:', streams);
+    logger.info('Read from stream:', streams);
     if (!streams) continue;
 
     for (const [, messages] of streams as Array<[string, Array<[string, string[]]>]>) {
       const rows: any[] = [];
       const messageIds: string[] = [];
-      console.log('messageIds are', messageIds);
+      logger.info('messageIds are', messageIds);
 
       for (const [id, fields] of messages) {
         const data = JSON.parse(fields[1]);
         let stops = routeCache.get(data.trip_id);
-        console.log('stops from cache is', stops);
+        logger.info('stops from cache is', stops);
 
         if (!stops) {
           const routeRes = await db.query(
@@ -83,19 +84,19 @@ export const startTripLocationWorker = async () => {
           );
 
           stops = routeRes.rows;
-          console.log('Fetched stops from DB for trip', data.trip_id, stops);
+          logger.info('Fetched stops from DB for trip', data.trip_id, stops);
           routeCache.set(data.trip_id, stops);
         }
 
         let currentIndex = tripProgress.get(data.trip_id);
-        console.log('currentIndex is', currentIndex);
+        logger.info('currentIndex is', currentIndex);
         if (currentIndex === undefined) {
           const startIndex = findInitialIndex(stops, data);
           tripProgress.set(data.trip_id, startIndex);
           currentIndex = startIndex;
         }
         if (!stops || stops.length === 0) {
-          console.warn(`No stops found for trip ${data.trip_id}`);
+          logger.warn(`No stops found for trip ${data.trip_id}`);
           continue;
         }
         const nextStop = stops[currentIndex];
@@ -161,7 +162,7 @@ export const startTripLocationWorker = async () => {
               });
             }
           } catch (error) {
-            console.error('ETA error:', error);
+            logger.error('ETA error:', error);
           }
         }
 
@@ -171,7 +172,7 @@ export const startTripLocationWorker = async () => {
             tripVisited.add(nextStop.id);
             visitedStops.set(data.trip_id, tripVisited);
             tripProgress.set(data.trip_id, currentIndex + 1);
-            console.log(`Trip ${data.trip_id} reached stop ${nextStop.id}`);
+            logger.info(`Trip ${data.trip_id} reached stop ${nextStop.id}`);
 
             const etaLog = await db.query(
               `
@@ -187,14 +188,14 @@ export const startTripLocationWorker = async () => {
             let actual = null;
             let delay = null;
 
-            console.log('etaLoglength', etaLog.rows);
+            logger.info('etaLoglength', etaLog.rows);
 
             if (etaLog.rows.length > 0) {
               predicted = etaLog.rows[0].predicted_eta_seconds;
-              console.log('predicted:', predicted);
+              logger.info('predicted:', predicted);
 
               const predictedTime = new Date(etaLog.rows[0].created_at).getTime();
-              console.log('predicted time:', predictedTime);
+              logger.info('predicted time:', predictedTime);
               const nowTime = Date.now();
 
               actual = Math.floor((nowTime - predictedTime) / 1000);
@@ -269,7 +270,7 @@ export const startTripLocationWorker = async () => {
           data.speed ?? null,
           data.recorded_at,
         ]);
-        console.log('Received trip location message:', data);
+        logger.info('Received trip location message:', data);
 
         messageIds.push(id);
         latestLocations.set(data.trip_id, {
@@ -303,7 +304,7 @@ export const startTripLocationWorker = async () => {
 
           await redis.xack(STREAM, GROUP, ...messageIds);
         } catch (err) {
-          console.error('DB insert failed:', err);
+          logger.error('DB insert failed:', err);
         }
       }
     }
