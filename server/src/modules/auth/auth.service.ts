@@ -6,6 +6,7 @@ import { User } from '../users/user.schema';
 import { generateAuthToken, generateRefreshToken } from '@/shared/middleware/auth.middleware';
 import { UserDTO } from '../users/user.dto';
 import { DriverRepository } from '../drivers/driver.repository';
+import logger from '@/shared/utils/logger';
 
 export class AuthService {
   constructor(
@@ -23,12 +24,12 @@ export class AuthService {
    */
   async loginUser(data: { email: string; password: string }): Promise<ServiceResponse> {
     const user = await this.authRepository.findByEmail(data.email);
-    console.log('Fetched user:', user);
+
     if (!user || user === undefined) {
       return ServiceResponse.unauthorized('Invalid credentials');
     }
 
-    console.log('user data:', user);
+    logger.info('user data:', user);
 
     const isPasswordValid = bcrypt.compareSync(data.password, user.password);
     if (!isPasswordValid) {

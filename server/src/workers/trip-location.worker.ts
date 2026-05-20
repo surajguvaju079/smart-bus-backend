@@ -56,7 +56,7 @@ export const startTripLocationWorker = async () => {
       STREAM,
       '>'
     )) as unknown as Array<[string, Array<[string, string[]]>]> | null;
-    logger.info('Read from stream:', streams);
+
     if (!streams) continue;
 
     for (const [, messages] of streams as Array<[string, Array<[string, string[]]>]>) {

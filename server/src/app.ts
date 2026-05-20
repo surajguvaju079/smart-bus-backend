@@ -41,7 +41,7 @@ class App {
   }
 
   private initializeMiddlewares() {
-    this.app.use('api', apiLimiter);
+    this.app.use('/api', apiLimiter);
     this.app.use(helmet());
     this.app.set('trust proxy', 1);
     this.app.use(

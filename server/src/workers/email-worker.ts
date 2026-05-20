@@ -5,7 +5,7 @@ import { welcomeTemplate } from '@/shared/services/welcome-template';
 import logger from '@/shared/utils/logger';
 
 export const startEmailWorker = () => {
-  console.log('📧 Email worker started');
+  console.log('Email worker started');
   const worker = new Worker(
     'email',
     async (job) => {
